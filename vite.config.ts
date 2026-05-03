@@ -7,6 +7,7 @@ import { nodePolyfills } from 'vite-plugin-node-polyfills';
 export default defineConfig(({mode}) => {
   const env = loadEnv(mode, '.', '');
   return {
+    base: './',
     plugins: [
       react(), 
       tailwindcss(),
@@ -15,7 +16,7 @@ export default defineConfig(({mode}) => {
         globals: {
           Buffer: true,
           process: true,
-          global: false,
+          global: true,
         },
       }),
     ],

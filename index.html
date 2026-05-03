@@ -4,6 +4,31 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>BagVault AI</title>
+    <script>
+      /**
+       * Safe 'global' polyfill for browser environments.
+       * Some libraries (like cross-fetch or Solana polyfills) try to overwrite 'fetch',
+       * which is a read-only property of 'window'. We provide a 'global' object that 
+       * is a proxy/shim for window but allows overwriting properties.
+       */
+      (function() {
+        if (typeof window.global === 'undefined') {
+          // Create an object that inherits from window but lets us shadow properties
+          const globalObj = Object.create(window);
+          
+          // Pre-shadow fetch to make it writable
+          Object.defineProperty(globalObj, 'fetch', {
+            value: window.fetch.bind(window),
+            writable: true,
+            configurable: true,
+            enumerable: true
+          });
+          
+          // Set it on window
+          window.global = globalObj;
+        }
+      })();
+    </script>
   </head>
   <body>
     <div id="root"></div>
