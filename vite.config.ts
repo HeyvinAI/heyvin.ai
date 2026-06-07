@@ -7,7 +7,7 @@ import { nodePolyfills } from 'vite-plugin-node-polyfills';
 export default defineConfig(({mode}) => {
   const env = loadEnv(mode, '.', '');
   return {
-    base: './',
+    base: '/',
     plugins: [
       react(), 
       tailwindcss(),
@@ -16,12 +16,13 @@ export default defineConfig(({mode}) => {
         globals: {
           Buffer: true,
           process: true,
-          global: true,
+          global: false, // Don't let polyfill define global, we use window.global
         },
       }),
     ],
     define: {
       'process.env.GEMINI_API_KEY': JSON.stringify(env.GEMINI_API_KEY),
+      'global': 'window.global', // Map global to our safe shim in index.html
     },
     resolve: {
       alias: {

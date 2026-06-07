@@ -1,67 +1,38 @@
-@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=Lora:ital,wght@0,400;0,500;0,600;0,700;1,400&family=JetBrains+Mono:wght@400;500&display=swap');
 @import "tailwindcss";
 
 @theme {
-  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
+  --font-sans: "DM Sans", "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-serif: "Lora", Georgia, Cambria, serif;
+  --font-mono: "JetBrains Mono", monospace;
+  
+  --color-brand-wine: #7C2D3E;
+  --color-brand-gold: #C9983A;
+  --color-brand-green: #1E6645;
+  --color-brand-amber: #C47B1A;
+  --color-brand-rust: #A63D2F;
 }
 
 @layer base {
   body {
-    background-color: #050505;
-    color: #00ff41;
-    font-family: var(--font-mono);
+    font-family: var(--font-sans);
+    margin: 0;
+    padding: 0;
+    background-color: #FAF7F2;
+    color: #1A1414;
+    transition: background-color 300ms, color 300ms;
   }
 }
 
-@layer components {
-  .terminal-box {
-    background: rgba(10, 10, 10, 0.85);
-    backdrop-filter: blur(12px);
-    border: 1px solid rgba(0, 255, 65, 0.2);
-    box-shadow: 0 0 40px rgba(0, 255, 65, 0.05);
-    position: relative;
-    overflow: hidden;
-  }
-
-  .scanline {
-    width: 100%;
-    height: 100px;
-    z-index: 10;
-    background: linear-gradient(
-      0deg,
-      rgba(0, 0, 0, 0) 0%,
-      rgba(0, 255, 65, 0.05) 50%,
-      rgba(0, 0, 0, 0) 100%
-    );
-    opacity: 0.1;
-    position: absolute;
-    bottom: 100%;
-    animation: scanline 6s linear infinite;
-    pointer-events: none;
-  }
-
-  .glow-text {
-    text-shadow: 0 0 8px rgba(0, 255, 65, 0.5);
-  }
-
-  .terminal-input {
-    background: transparent;
-    border: none;
-    outline: none;
-    color: #00ff41;
-    width: 100%;
-    font-family: inherit;
-  }
+/* Base custom border utilities */
+.border-thin-brand {
+  border: 1px solid #EDE8E0;
 }
 
-@keyframes scanline {
-  0% { bottom: 100%; }
-  100% { bottom: -100%; }
-}
-
-/* Custom scrollbar for terminal vibe */
+/* Custom Scrollbar for list structures */
 ::-webkit-scrollbar {
-  width: 4px;
+  width: 6px;
+  height: 6px;
 }
 
 ::-webkit-scrollbar-track {
@@ -69,10 +40,30 @@
 }
 
 ::-webkit-scrollbar-thumb {
-  background: rgba(0, 255, 65, 0.2);
-  border-radius: 10px;
+  background: rgba(124, 45, 62, 0.1);
+  border-radius: 9999px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(0, 255, 65, 0.4);
+  background: rgba(124, 45, 62, 0.25);
+}
+
+/* Breathing animation for Calm circle (modified with brand wine color) */
+@keyframes breathing {
+  0% {
+    transform: scale(0.92);
+    box-shadow: 0 0 10px rgba(124, 45, 62, 0.15);
+  }
+  50% {
+    transform: scale(1.18);
+    box-shadow: 0 0 35px rgba(124, 45, 62, 0.45);
+  }
+  100% {
+    transform: scale(0.92);
+    box-shadow: 0 0 10px rgba(124, 45, 62, 0.15);
+  }
+}
+
+.breathing-circle {
+  animation: breathing 7s ease-in-out infinite;
 }

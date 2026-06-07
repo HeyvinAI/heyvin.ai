@@ -1,34 +1,50 @@
 <!doctype html>
 <html lang="en">
   <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>BagVault AI</title>
     <script>
       /**
-       * Safe 'global' polyfill for browser environments.
-       * Some libraries (like cross-fetch or Solana polyfills) try to overwrite 'fetch',
-       * which is a read-only property of 'window'. We provide a 'global' object that 
-       * is a proxy/shim for window but allows overwriting properties.
+       * Robust 'global' polyfill for browser environments.
+       * Uses a Proxy to intercept property assignments (like 'fetch') that are read-only
+       * on the native 'window' object, preventing crashes in Web3 and polyfill libraries.
        */
       (function() {
         if (typeof window.global === 'undefined') {
-          // Create an object that inherits from window but lets us shadow properties
-          const globalObj = Object.create(window);
+          const target = {
+            global: null,
+            process: { env: {} },
+            Buffer: window.Buffer || function() {}
+          };
           
-          // Pre-shadow fetch to make it writable
-          Object.defineProperty(globalObj, 'fetch', {
-            value: window.fetch.bind(window),
-            writable: true,
-            configurable: true,
-            enumerable: true
+          const globalObj = new Proxy(target, {
+            get(t, prop) {
+              if (prop === 'global') return globalObj;
+              if (prop in t) return t[prop];
+              const val = window[prop];
+              // Bind functions to window to avoid 'Illegal invocation'
+              if (typeof val === 'function') return val.bind(window);
+              return val;
+            },
+            set(t, prop, value) {
+              t[prop] = value;
+              return true;
+            },
+            has(t, prop) {
+              return prop in t || prop in window;
+            }
           });
           
-          // Set it on window
+          // Ensure fetch is available on the proxy and writable
+          target.fetch = window.fetch.bind(window);
+          target.global = globalObj;
+          
           window.global = globalObj;
         }
       })();
     </script>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Heyvin AI</title>
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100' fill='none'%3E%3Cdefs%3E%3ClinearGradient id='fGrad' x1='0%25' y1='100%25' x2='100%25' y2='0%25'%3E%3Cstop offset='0%25' stop-color='%230e7490'/%3E%3Cstop offset='100%25' stop-color='%2322d3ee'/%3E%3C/linearGradient%3E%3C/defs%3E%3Ccircle cx='50' cy='50' r='48' fill='%23042f2e'/%3E%3Cg transform='translate(0, 5)'%3E%3Cpath d='M50 70 C25 65, 5 45, 10 30 C15 20, 30 30, 50 50 Z' fill='url(%23fGrad)'/%3E%3Cpath d='M50 70 C75 65, 95 45, 90 30 C85 20, 70 30, 50 50 Z' fill='url(%23fGrad)'/%3E%3Cpath d='M50 70 C35 55, 20 40, 25 25 C30 20, 40 35, 50 50 Z' fill='url(%23fGrad)'/%3E%3Cpath d='M50 70 C65 55, 80 40, 75 25 C70 20, 60 35, 50 50 Z' fill='url(%23fGrad)'/%3E%3Cpath d='M50 70 C40 50, 40 30, 50 10 C60 30, 60 50, 50 70 Z' fill='%2322d3ee'/%3E%3C/g%3E%3Ccircle cx='50' cy='52' r='14' stroke='%23e0f7fa' stroke-width='2' fill='%23042f2e'/%3E%3Ccircle cx='50' cy='52' r='1.5' fill='%23e0f7fa'/%3E%3Cline x1='50' y1='52' x2='44' y2='47' stroke='%23e0f7fa' stroke-width='2' stroke-linecap='round'/%3E%3Cline x1='50' y1='52' x2='57' y2='49' stroke='%2322d3ee' stroke-width='1.5' stroke-linecap='round'/%3E%3C/svg%3E" />
   </head>
   <body>
     <div id="root"></div>

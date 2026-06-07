@@ -1,6 +1,6 @@
 {
-  "name": "Vault AI",
-  "description": "High-performance Web3 terminal for the Bags ecosystem with real-time momentum tracking and alpha detection.",
+  "name": "Heyvin AI",
+  "description": "A discreet AI-powered personal success auditor for ambitious young women in Nigeria, Mexico, and India.",
   "requestFramePermissions": [],
-  "majorCapabilities": ["Web3", "Blockchain Analysis"]
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }

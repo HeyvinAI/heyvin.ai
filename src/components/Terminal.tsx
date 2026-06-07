@@ -23,6 +23,34 @@ export default function Terminal({ theme }: { theme: 'dark' | 'light' }) {
   const { fetchTrendingCreators, getVaultAlpha } = useVault();
 
   useEffect(() => {
+    const boot = async () => {
+      try {
+        // Small delay to make it feel like a real boot
+        await new Promise(r => setTimeout(r, 400));
+        addLog('system', 'INITIALIZING VAULT_TERMINAL_v1.0.4...');
+        await new Promise(r => setTimeout(r, 600));
+        addLog('system', 'ESTABLISHING SECURE_CONNECTION TO BAGS_PROTOCOL...');
+        await new Promise(r => setTimeout(r, 500));
+        addLog('system', 'CONNECTION_ESTABLISHED. HANDSHAKE_SUCCESS.');
+        await new Promise(r => setTimeout(r, 300));
+        addLog('output', (
+          <div className="space-y-1">
+            <p className="text-green-400 font-bold">WELCOME TO BAGVAULT_AI</p>
+            <p className="opacity-70">The most advanced Alpha Extraction Layer for the Bags ecosystem.</p>
+            <p className="mt-2">Type <span className="font-bold text-white">help</span> to view available protocols.</p>
+          </div>
+        ));
+      } catch (err) {
+        console.error('Boot error:', err);
+        addLog('error', 'SYSTEM_BOOT_WARN: Non-critical failure in display buffer.');
+      } finally {
+        setIsInitializing(false);
+      }
+    };
+    boot();
+  }, []);
+
+  useEffect(() => {
     if (scrollRef.current) {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
     }
