@@ -12,6 +12,14 @@ const PORT = 3000;
 
 app.use(express.json());
 
+// Vercel URL normalizing middleware to translate internal function rewrites back to expected routes
+app.use((req, res, next) => {
+  if (req.url && (req.url.startsWith("/api/index") || req.url.startsWith("/api/oauth")) && req.query.code) {
+    req.url = req.url.replace(/^\/(api\/index|api\/oauth)/, "/auth/callback");
+  }
+  next();
+});
+
 // Lazy-initialize Gemini client
 let aiClient: GoogleGenAI | null = null;
 function getAI() {
@@ -410,9 +418,15 @@ app.get("/api/auth/google/url", (req, res) => {
   });
 });
 
-app.get(["/auth/callback", "/auth/callback/"], async (req, res) => {
+app.get(["/auth/callback", "/auth/callback/", "/api/auth/callback", "/api/auth/callback/", "/api/index"], async (req, res) => {
   const code = req.query.code as string;
   const state = req.query.state as string;
+  
+  // If hitting a serverless path directly without any auth code, redirect back cleanly to the web app frontend
+  if (!code && (req.path === "/api/index" || req.path === "/api/auth/callback")) {
+    return res.redirect("/");
+  }
+
   let email = "sister.sovereign@gmail.com";
   let name = "Sovereign Sister";
   const isSandbox = !process.env.GOOGLE_CLIENT_ID || !process.env.GOOGLE_CLIENT_SECRET || code === "sandbox_code";
