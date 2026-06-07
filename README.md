@@ -40,6 +40,36 @@ Supports fast, encrypted pseudonym logins or physical **Google Sign-In OAuth** c
 
 ---
 
+## 🚀 Quick Local Development Setup
+
+### 1. Prerequisites
+Ensure you have Node.js (v18+) and npm installed.
+
+### 2. Installation
+Install all base project dependencies:
+```bash
+npm install
+```
+
+### 3. Environment Configuration
+Create a local `.env` file referencing the templates provided in `.env.example`:
+```env
+# Gemini API client for therapeutic framing logs
+GEMINI_API_KEY=your_gemini_key
+
+# Google OAuth tokens for safe login integration
+GOOGLE_CLIENT_ID=your_client_id
+GOOGLE_CLIENT_SECRET=your_client_secret
+```
+
+### 4. Directing Development Servers
+To boot the full-stack server under the required port config (`3000`):
+```bash
+npm run dev
+```
+Open **http://localhost:3000** in your browser.
+
+---
 
 ## 🔒 Security Commitments
 

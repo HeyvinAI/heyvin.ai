@@ -6,7 +6,11 @@ import {
   Youtube, Video, ExternalLink, BookOpen
 } from "lucide-react";
 
-export function LandingInteractiveShowcase() {
+export interface LandingInteractiveShowcaseProps {
+  onSignUpClick?: () => void;
+}
+
+export function LandingInteractiveShowcase({ onSignUpClick }: LandingInteractiveShowcaseProps) {
   // Simulator State
   const [choreHours, setChoreHours] = useState<number>(3);
   const [interruptionLevel, setInterruptionLevel] = useState<number>(3); // 1-5
@@ -413,7 +417,7 @@ export function LandingInteractiveShowcase() {
             </div>
 
             {/* Tactical Blueprint Suggestion */}
-            <div className={`p-4 border rounded-xl space-y-2 transition-all leading-relaxed text-xs ${colorTheme}`}>
+            <div className={`p-4 border rounded-xl space-y-3 transition-all leading-relaxed text-xs ${colorTheme} shadow-xs`}>
               <span className="font-serif font-bold text-[12px] flex items-center gap-1">
                 <Zap size={12} />
                 Sovereign Strategy Blueprint
@@ -421,6 +425,13 @@ export function LandingInteractiveShowcase() {
               <p className="font-medium text-gray-700 leading-normal">
                 {strategy}
               </p>
+              <button
+                type="button"
+                onClick={onSignUpClick}
+                className="w-full mt-1.5 py-2 px-3 rounded-lg bg-[#7C2D3E] text-white hover:bg-[#60202e] text-[10px] uppercase font-extrabold tracking-widest transition-all cursor-pointer flex items-center justify-center gap-1.5 shadow-sm"
+              >
+                <span>Track Streak & Start Now ➔</span>
+              </button>
             </div>
           </div>
 
@@ -1135,6 +1146,47 @@ export function LandingInteractiveShowcase() {
             );
           })}
         </div>
+      </section>
+
+      {/* FINAL HIGH-CONVERSION CTA PROMOTION */}
+      <section className="bg-gradient-to-br from-[#7C2D3E] to-[#5a1b28] text-white rounded-3xl p-8 sm:p-10 text-center space-y-6 relative overflow-hidden shadow-xl mt-8">
+        <div className="absolute top-0 left-0 w-32 h-32 bg-white/5 rounded-full blur-2xl pointer-events-none" />
+        <div className="absolute bottom-0 right-0 w-32 h-32 bg-amber-500/10 rounded-full blur-2xl pointer-events-none" />
+        
+        <div className="space-y-3 relative z-10 max-w-2xl mx-auto">
+          <span className="text-[10px] uppercase font-bold tracking-widest text-[#E28E75] bg-red-950/40 px-3.5 py-1 rounded-full">
+            100% Free & Device-Isolated
+          </span>
+          <h2 className="text-3xl sm:text-4xl font-serif font-black text-white leading-tight">
+            Ready to claim complete study authority?
+          </h2>
+          <p className="text-xs sm:text-sm text-rose-150/90 leading-relaxed max-w-lg mx-auto">
+            Create your local pseudonym profile under 30 seconds. Sync with secure Google OAuth calendars without exposing a single pixel of your personal life.
+          </p>
+        </div>
+
+        <div className="pt-2 relative z-10 flex flex-col sm:flex-row items-center justify-center gap-3">
+          <button
+            type="button"
+            onClick={onSignUpClick}
+            className="w-full sm:w-auto px-8 py-3.5 rounded-xl text-xs uppercase font-extrabold tracking-wider bg-white text-[#7C2D3E] hover:bg-rose-50 transition-all cursor-pointer shadow-lg active:scale-95 flex items-center justify-center gap-2"
+          >
+            <span>Create Your Safe Space Instantly</span>
+            <Sparkles size={14} className="text-[#7C2D3E]" />
+          </button>
+          
+          <button
+            type="button"
+            onClick={onSignUpClick}
+            className="w-full sm:w-auto px-6 py-3.5 rounded-xl text-xs uppercase font-extrabold tracking-wider bg-[#541a24] hover:bg-[#46141c] border border-white/10 text-orange-100 transition-all cursor-pointer shadow-md flex items-center justify-center gap-2"
+          >
+            <span>Sign-On with Google</span>
+          </button>
+        </div>
+        
+        <p className="text-[10px] text-rose-300 font-mono tracking-wide relative z-10 pt-2">
+          🛡️ No credit cards. No server-side file storing. 100% confidentiality guaranteed.
+        </p>
       </section>
 
     </div>
