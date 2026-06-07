@@ -963,6 +963,110 @@ export function LandingInteractiveShowcase() {
         </div>
       </section>
 
+      {/* THE TEAM SECTION (AS ATTACHED IN THE USER'S DESIGN IMAGE) */}
+      <section className="bg-[#0b1329] text-white rounded-3xl p-6 sm:p-8 space-y-8 border border-cyan-500/10 shadow-2xl relative overflow-hidden font-sans">
+        {/* Decorative corner ambient lights */}
+        <div className="absolute top-0 right-0 w-48 h-48 bg-cyan-500/5 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute bottom-0 left-0 w-48 h-48 bg-emerald-500/5 rounded-full blur-3xl pointer-events-none" />
+
+        <div className="space-y-2 text-center md:text-left relative z-10">
+          <h2 className="text-2xl sm:text-3xl font-extrabold tracking-wider text-cyan-400 font-mono flex items-center justify-center md:justify-start gap-2.5">
+            THE TEAM
+          </h2>
+          <p className="text-xs sm:text-sm text-cyan-200/80 font-mono italic leading-relaxed">
+            Two founders. Every skill the product needs. One mission.
+          </p>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 relative z-10">
+          {/* Card 1: Ozioma */}
+          <div className="bg-[#070e20] rounded-2xl border-t-2 border-cyan-400 border border-cyan-500/5 p-6 space-y-6 flex flex-col justify-between hover:border-cyan-400/40 transition-all duration-300 shadow-xl group">
+            <div className="space-y-6 text-center">
+              {/* Circular initial */}
+              <div className="mx-auto w-20 h-20 rounded-full border-2 border-cyan-400/50 flex items-center justify-center bg-cyan-950/20 shadow-[0_0_20px_rgba(34,211,238,0.05)] group-hover:scale-105 transition-transform duration-300">
+                <span className="text-3xl font-bold font-mono text-cyan-400 leading-none">O</span>
+              </div>
+
+              {/* Bio details */}
+              <div className="space-y-1.5">
+                <h3 className="text-xl font-bold font-serif text-white tracking-wide">Ozioma</h3>
+                <p className="text-xs font-bold text-cyan-400 uppercase tracking-widest font-mono">
+                  CEO & Co-Founder
+                </p>
+                <p className="text-[11px] text-gray-400 italic">
+                  Tech, AI & Data Systems Lead
+                </p>
+              </div>
+
+              {/* Custom badge tags grid */}
+              <div className="grid grid-cols-2 gap-2 text-[9.5px] font-semibold font-mono tracking-wide">
+                {[
+                  "AI Architecture",
+                  "Data Systems",
+                  "Business Strategy",
+                  "Emerging Markets",
+                ].map((tag, i) => (
+                  <span 
+                    key={i} 
+                    className="p-2 rounded-lg bg-[#0c142c] border border-cyan-400/10 text-cyan-300 text-center hover:bg-[#101a38] hover:border-cyan-400/25 transition-all text-[9.5px]"
+                  >
+                    {tag}
+                  </span>
+                ))}
+              </div>
+            </div>
+
+            {/* Impact phrase line */}
+            <p className="text-[11px] text-gray-400 text-center font-mono border-t border-cyan-500/5 pt-4 mt-2">
+              The technical and strategic backbone of Heyvin AI
+            </p>
+          </div>
+
+          {/* Card 2: Dominion */}
+          <div className="bg-[#070e20] rounded-2xl border-t-2 border-emerald-400 border border-emerald-500/5 p-6 space-y-6 flex flex-col justify-between hover:border-emerald-400/40 transition-all duration-300 shadow-xl group">
+            <div className="space-y-6 text-center">
+              {/* Circular initial */}
+              <div className="mx-auto w-20 h-20 rounded-full border-2 border-emerald-400/50 flex items-center justify-center bg-emerald-950/20 shadow-[0_0_20px_rgba(52,211,153,0.05)] group-hover:scale-105 transition-transform duration-300">
+                <span className="text-3xl font-bold font-mono text-emerald-400 leading-none">D</span>
+              </div>
+
+              {/* Bio details */}
+              <div className="space-y-1.5">
+                <h3 className="text-xl font-bold font-serif text-white tracking-wide">Dominion</h3>
+                <p className="text-xs font-bold text-emerald-400 uppercase tracking-widest font-mono">
+                  CPO & Co-Founder
+                </p>
+                <p className="text-[11px] text-gray-400 italic">
+                  Product Design & User Psychology Lead
+                </p>
+              </div>
+
+              {/* Custom badge tags grid */}
+              <div className="grid grid-cols-2 gap-2 text-[9.5px] font-semibold font-mono tracking-wide">
+                {[
+                  "UX Design",
+                  "User Psychology",
+                  "Stealth Interface",
+                  "Cultural Design",
+                ].map((tag, i) => (
+                  <span 
+                    key={i} 
+                    className="p-2 rounded-lg bg-[#0c142c] border border-emerald-400/10 text-emerald-300 text-center hover:bg-[#101a38] hover:border-emerald-400/25 transition-all text-[9.5px]"
+                  >
+                    {tag}
+                  </span>
+                ))}
+              </div>
+            </div>
+
+            {/* Impact phrase line */}
+            <p className="text-[11px] text-gray-400 text-center font-mono border-t border-cyan-500/5 pt-4 mt-2">
+              The voice and guardian of the user inside every product decision
+            </p>
+          </div>
+        </div>
+      </section>
+
       {/* 6. HARD TRUST VERIFICATION CHECKLIST (MANDATORY SAFE SANCTUARY AUDIT) */}
       <section className="bg-[#FAF7F2] border border-[#EDE8E0] rounded-2xl p-6 sm:p-8 grid grid-cols-1 md:grid-cols-3 gap-6 items-center">
         

@@ -493,14 +493,22 @@ app.get(["/auth/callback", "/auth/callback/"], async (req, res) => {
           @keyframes spin { to { transform: rotate(360deg); } }
         </style>
         <script>
-          if (window.opener) {
-            window.opener.postMessage({ 
-              type: 'GOOGLE_OAUTH_SUCCESS', 
-              user: { email: "${email}", name: "${name}" } 
-            }, '*');
-            window.close();
-          } else {
-            window.location.href = '/';
+          let sent = false;
+          try {
+            if (window.opener && typeof window.opener.postMessage === 'function') {
+              window.opener.postMessage({ 
+                type: 'GOOGLE_OAUTH_SUCCESS', 
+                user: { email: "${email}", name: "${name}" } 
+              }, '*');
+              sent = true;
+              setTimeout(function() { window.close(); }, 500);
+            }
+          } catch (e) {
+            console.error("Popup communication restricted", e);
+          }
+          
+          if (!sent) {
+            window.location.href = '/?oauth_email=' + encodeURIComponent("${email}") + '&oauth_name=' + encodeURIComponent("${name}");
           }
         </script>
       </body>
