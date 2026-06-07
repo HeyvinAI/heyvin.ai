@@ -166,7 +166,8 @@ export default function App() {
   const handleGoogleSignIn = async () => {
     setOauthLoading(true);
     try {
-      const res = await fetch("/api/auth/google/url");
+      const originParam = encodeURIComponent(window.location.origin);
+      const res = await fetch(`/api/auth/google/url?origin=${originParam}`);
       if (!res.ok) throw new Error("Could not construct OAuth authorization url");
       const data = await res.json();
       

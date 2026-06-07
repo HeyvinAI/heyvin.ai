@@ -358,17 +358,30 @@ Sound like a sharp, warm mentor. No fluff. No generic, overly dramatic motivatio
 app.get("/api/auth/google/url", (req, res) => {
   const clientId = process.env.GOOGLE_CLIENT_ID;
   
-  // Dynamically resolve redirect URI to account for Vercel, personal domains, etc.
+  // Resolve origin from query parameter first, fallback to headers, Vercel, or localhost
+  const clientOrigin = req.query.origin as string;
   let redirectUri = "";
-  if (process.env.GOOGLE_REDIRECT_URI) {
-    redirectUri = process.env.GOOGLE_REDIRECT_URI;
-  } else if (process.env.VERCEL_URL) {
-    const vUrl = process.env.VERCEL_URL;
-    redirectUri = vUrl.startsWith("http") ? `${vUrl}/auth/callback` : `https://${vUrl}/auth/callback`;
-  } else {
-    const host = req.get('host') || "localhost:3000";
-    const protocol = req.secure || req.headers['x-forwarded-proto'] === 'https' ? 'https' : 'http';
-    redirectUri = `${protocol}://${host}/auth/callback`;
+  
+  if (clientOrigin) {
+    try {
+      const parsed = new URL(clientOrigin);
+      redirectUri = `${parsed.origin}/auth/callback`;
+    } catch (_) {
+      // Ignore invalid URL
+    }
+  }
+  
+  if (!redirectUri) {
+    if (process.env.GOOGLE_REDIRECT_URI) {
+      redirectUri = process.env.GOOGLE_REDIRECT_URI;
+    } else if (process.env.VERCEL_URL) {
+      const vUrl = process.env.VERCEL_URL;
+      redirectUri = vUrl.startsWith("http") ? `${vUrl}/auth/callback` : `https://${vUrl}/auth/callback`;
+    } else {
+      const host = req.get('host') || "localhost:3000";
+      const protocol = req.secure || req.headers['x-forwarded-proto'] === 'https' ? 'https' : 'http';
+      redirectUri = `${protocol}://${host}/auth/callback`;
+    }
   }
   
   if (!clientId) {
@@ -380,12 +393,15 @@ app.get("/api/auth/google/url", (req, res) => {
     });
   }
 
+  const encodedState = clientOrigin ? Buffer.from(clientOrigin).toString('base64') : 'sandbox';
+
   const params = new URLSearchParams({
     client_id: clientId,
     redirect_uri: redirectUri,
     response_type: "code",
     scope: "openid email profile",
-    prompt: "select_account"
+    prompt: "select_account",
+    state: encodedState
   });
 
   res.json({ 
@@ -396,23 +412,44 @@ app.get("/api/auth/google/url", (req, res) => {
 
 app.get(["/auth/callback", "/auth/callback/"], async (req, res) => {
   const code = req.query.code as string;
+  const state = req.query.state as string;
   let email = "sister.sovereign@gmail.com";
   let name = "Sovereign Sister";
   const isSandbox = !process.env.GOOGLE_CLIENT_ID || !process.env.GOOGLE_CLIENT_SECRET || code === "sandbox_code";
 
   if (!isSandbox) {
     try {
-      // Dynamically resolve redirect URI to account for Vercel, personal domains, etc.
+      let clientOrigin = "";
+      if (state && state !== 'sandbox') {
+        try {
+          clientOrigin = Buffer.from(state, 'base64').toString('utf-8');
+        } catch (_) {
+          // Ignore decode error
+        }
+      }
+
+      // Dynamically resolve redirect URI matching the request
       let redirectUri = "";
-      if (process.env.GOOGLE_REDIRECT_URI) {
-        redirectUri = process.env.GOOGLE_REDIRECT_URI;
-      } else if (process.env.VERCEL_URL) {
-        const vUrl = process.env.VERCEL_URL;
-        redirectUri = vUrl.startsWith("http") ? `${vUrl}/auth/callback` : `https://${vUrl}/auth/callback`;
-      } else {
-        const host = req.get('host') || "localhost:3000";
-        const protocol = req.secure || req.headers['x-forwarded-proto'] === 'https' ? 'https' : 'http';
-        redirectUri = `${protocol}://${host}/auth/callback`;
+      if (clientOrigin) {
+        try {
+          const parsed = new URL(clientOrigin);
+          redirectUri = `${parsed.origin}/auth/callback`;
+        } catch (_) {
+          // Ignore
+        }
+      }
+
+      if (!redirectUri) {
+        if (process.env.GOOGLE_REDIRECT_URI) {
+          redirectUri = process.env.GOOGLE_REDIRECT_URI;
+        } else if (process.env.VERCEL_URL) {
+          const vUrl = process.env.VERCEL_URL;
+          redirectUri = vUrl.startsWith("http") ? `${vUrl}/auth/callback` : `https://${vUrl}/auth/callback`;
+        } else {
+          const host = req.get('host') || "localhost:3000";
+          const protocol = req.secure || req.headers['x-forwarded-proto'] === 'https' ? 'https' : 'http';
+          redirectUri = `${protocol}://${host}/auth/callback`;
+        }
       }
       
       const tokenRes = await fetch("https://oauth2.googleapis.com/token", {
