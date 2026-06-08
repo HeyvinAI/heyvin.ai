@@ -127,10 +127,10 @@ export function LandingInteractiveShowcase({ onSignUpClick }: LandingInteractive
       const gainNode = ctx.createGain();
       gainNodeRef.current = gainNode;
 
-      // Filter high frequencies out slightly for a smooth dark drone sound, but allow mid frequencies to pass (raised cutoff for small laptop speakers)
+      // Filter high frequencies out slightly for a smooth dark drone sound, but allow mid frequencies to pass cleanly (raised cutoff from 600Hz to 1400Hz for laptop speaker fidelity)
       const filter = ctx.createBiquadFilter();
       filter.type = "lowpass";
-      filter.frequency.setValueAtTime(600, ctx.currentTime);
+      filter.frequency.setValueAtTime(1400, ctx.currentTime);
 
       if (type === "Peaceful Waves") {
         const osc = ctx.createOscillator();
@@ -142,13 +142,13 @@ export function LandingInteractiveShowcase({ onSignUpClick }: LandingInteractive
         harmonic.type = "sine";
         harmonic.frequency.setValueAtTime(440, ctx.currentTime); // A4 (Octave up)
         const harmonicGain = ctx.createGain();
-        harmonicGain.gain.setValueAtTime(0.08, ctx.currentTime);
+        harmonicGain.gain.setValueAtTime(0.35, ctx.currentTime); // Elevated from 0.08 for laptop audio presence
         
         // Tremolo LFO to synthesize gentle rising and falling seawater tide patterns
         const tideLFO = ctx.createOscillator();
         tideLFO.frequency.setValueAtTime(0.18, ctx.currentTime); // ~5.5-second tide cycles
         const tideGain = ctx.createGain();
-        tideGain.gain.setValueAtTime(0.04, ctx.currentTime);
+        tideGain.gain.setValueAtTime(0.06, ctx.currentTime);
         
         tideLFO.connect(tideGain);
         tideGain.connect(gainNode.gain); // Modulate volume dynamically
@@ -174,9 +174,15 @@ export function LandingInteractiveShowcase({ onSignUpClick }: LandingInteractive
         
         const oscHarmonic = ctx.createOscillator();
         oscHarmonic.type = "sine";
-        oscHarmonic.frequency.setValueAtTime(247.5, ctx.currentTime); // B3 (Warm perfect fifth harmony)
+        oscHarmonic.frequency.setValueAtTime(330, ctx.currentTime); // E4 (Octave shift up for mid register definition)
         const harmGain = ctx.createGain();
-        harmGain.gain.setValueAtTime(0.06, ctx.currentTime);
+        harmGain.gain.setValueAtTime(0.30, ctx.currentTime); // Elevated from 0.06 for laptop audio presence
+        
+        const oscUpperHarmonic = ctx.createOscillator();
+        oscUpperHarmonic.type = "sine";
+        oscUpperHarmonic.frequency.setValueAtTime(495, ctx.currentTime); // B4 (Fifth harmony overlay)
+        const upperHarmGain = ctx.createGain();
+        upperHarmGain.gain.setValueAtTime(0.18, ctx.currentTime);
         
         oscBase.connect(filter);
         
@@ -185,21 +191,35 @@ export function LandingInteractiveShowcase({ onSignUpClick }: LandingInteractive
         
         oscHarmonic.connect(harmGain);
         harmGain.connect(filter);
+
+        oscUpperHarmonic.connect(upperHarmGain);
+        upperHarmGain.connect(filter);
         
         oscBase.start();
         oscSub.start();
         oscHarmonic.start();
+        oscUpperHarmonic.start();
       } else if (type === "Binaural Study Beat") {
-        // True Stereo Binaural Beat
+        // True Stereo Binaural Beat shifted up slightly for speaker responsiveness
         const oscLeft = ctx.createOscillator();
         const oscRight = ctx.createOscillator();
         
         oscLeft.type = "sine";
-        oscLeft.frequency.setValueAtTime(200, ctx.currentTime); // 200 Hz Left Channel
+        oscLeft.frequency.setValueAtTime(320, ctx.currentTime); // 320 Hz Left Channel
         
         oscRight.type = "sine";
-        oscRight.frequency.setValueAtTime(207.5, ctx.currentTime); // G3 + 7.5 Hz (Theta wave brain entrainment)
+        oscRight.frequency.setValueAtTime(327.5, ctx.currentTime); // 327.5 Hz (Theta wave brain entrainment)
         
+        // Mid-tone background stabilizer pad for acoustic fullness
+        const oscPad = ctx.createOscillator();
+        oscPad.type = "triangle";
+        oscPad.frequency.setValueAtTime(160, ctx.currentTime);
+        const padGain = ctx.createGain();
+        padGain.gain.setValueAtTime(0.18, ctx.currentTime);
+
+        oscPad.connect(padGain);
+        padGain.connect(filter);
+
         try {
           const merger = ctx.createChannelMerger(2);
           oscLeft.connect(merger, 0, 0);
@@ -213,10 +233,11 @@ export function LandingInteractiveShowcase({ onSignUpClick }: LandingInteractive
         
         oscLeft.start();
         oscRight.start();
+        oscPad.start();
       }
 
-      // Master volume scale
-      const volumeFloat = (synthVolume / 100) * 0.18;
+      // Master volume scale (boosted coefficient from 0.18 to 0.48 to make waves clearly audible)
+      const volumeFloat = (synthVolume / 100) * 0.48;
       gainNode.gain.setValueAtTime(volumeFloat, ctx.currentTime);
 
       filter.connect(gainNode);
@@ -245,7 +266,7 @@ export function LandingInteractiveShowcase({ onSignUpClick }: LandingInteractive
   // Adjust volume dynamically while playing (smooth volume slider changes without jarring sound restarts)
   useEffect(() => {
     if (gainNodeRef.current && audioContextRef.current) {
-      const volumeFloat = (synthVolume / 100) * 0.18;
+      const volumeFloat = (synthVolume / 100) * 0.48;
       gainNodeRef.current.gain.setValueAtTime(volumeFloat, audioContextRef.current.currentTime);
     }
   }, [synthVolume]);

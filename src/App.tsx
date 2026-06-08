@@ -27,6 +27,29 @@ import { TherapeuticCopingSuite } from "./components/TherapeuticCopingSuite";
 import { SovereignSettingsView } from "./components/SovereignSettingsView";
 import { SovereignChroniclesFeed } from "./components/SovereignChroniclesFeed";
 import { LandingInteractiveShowcase } from "./components/LandingInteractiveShowcase";
+import ConfettiCelebration from "./components/ConfettiCelebration";
+
+const cardVariants = {
+  hidden: { opacity: 0, y: 15 },
+  visible: (i: number) => ({
+    opacity: 1,
+    y: 0,
+    transition: {
+      delay: i * 0.05,
+      duration: 0.35,
+      ease: [0.25, 0.8, 0.25, 1.0]
+    }
+  })
+};
+
+const tabContentVariants = {
+  hidden: { opacity: 0, y: 10 },
+  visible: { 
+    opacity: 1, 
+    y: 0,
+    transition: { duration: 0.25, ease: "easeOut" }
+  }
+};
 
 export default function App() {
   const [currentUser, setCurrentUser] = useState<UserProfile | null>(null);
@@ -87,6 +110,7 @@ export default function App() {
 
   // Tasks local tracking
   const [tasks, setTasks] = useState<Task[]>([]);
+  const [showConfetti, setShowConfetti] = useState(false);
   const [newTaskTitle, setNewTaskTitle] = useState("");
   const [newTaskCategory, setNewTaskCategory] = useState<'Academics' | 'Career Prep' | 'Personal Boundaries' | 'Life Admin'>("Academics");
 
@@ -533,9 +557,19 @@ export default function App() {
     const taskList = db.get<Task>(currentUser.uid, "tasks");
     const found = taskList.find(t => t.id === tid);
     if (found) {
+      const wasCompleted = found.completed;
       found.completed = !found.completed;
       db.upsert(currentUser.uid, "tasks", found);
       loadUserData(currentUser.uid);
+
+      // Trigger confetti if they completed their final task
+      if (!wasCompleted && found.completed) {
+        const updatedList = db.get<Task>(currentUser.uid, "tasks");
+        const remainingIncomplete = updatedList.filter(t => !t.completed).length;
+        if (remainingIncomplete === 0 && updatedList.length > 0) {
+          setShowConfetti(true);
+        }
+      }
     }
   };
 
@@ -732,6 +766,16 @@ export default function App() {
             <Sparkles size={14} className="animate-pulse" />
             <span>{successToast}</span>
           </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Confetti Celebration overlay when final task is checked off */}
+      <AnimatePresence>
+        {showConfetti && (
+          <ConfettiCelebration 
+            onClose={() => setShowConfetti(false)} 
+            stealthActive={stealthActive} 
+          />
         )}
       </AnimatePresence>
 
@@ -1602,11 +1646,16 @@ export default function App() {
 
           {/* Main workspace (tabs rendering) */}
           <main className="flex-1 min-h-screen pt-20 px-4 sm:px-8 pb-20 md:pb-8 overflow-y-auto">
-                  {/* View Today Dashboard */}
-            {activeTab === "today" && currentUser && (
+                     {activeTab === "today" && currentUser && (
               <div id="today_dashboard" className="space-y-6 max-w-4xl mx-auto">
                 {/* Greeting Header */}
-                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between border-b border-[#EDE8E0] pb-4 gap-4">
+                <motion.div 
+                  custom={0}
+                  initial="hidden"
+                  animate="visible"
+                  variants={cardVariants}
+                  className="flex flex-col sm:flex-row sm:items-center sm:justify-between border-b border-[#EDE8E0] pb-4 gap-4"
+                >
                   <div>
                     <h2 className="text-3xl font-bold font-serif tracking-tight text-[#1A1414]">
                       Good Day, {currentUser.username}
@@ -1629,30 +1678,43 @@ export default function App() {
                   >
                     <span>🔒 Lock In Focus</span>
                   </button>
-                </div>
+                </motion.div>
 
                 {/* 1. Morning Briefing Card (new) */}
-                <MorningBriefingCard 
-                  userId={currentUser.uid}
-                  stealthActive={stealthActive}
-                  pendingTasksCount={tasks.filter(t => !t.completed).length}
-                  lastSovereigntyScore={db.calculateSovereigntyScore(currentUser.uid).score}
-                  predictedSafeWindow="5:00 AM — 8:00 AM"
-                  lastJournalMood={(() => {
-                    const jrnl = db.get<any>(currentUser.uid, "journal_entries");
-                    if (jrnl && jrnl.length > 0) {
-                      const sorted = [...jrnl].sort((a,b) => b.created_at.localeCompare(a.created_at));
-                      return sorted[0].mood;
-                    }
-                    return "Okay";
-                  })()}
-                />
+                <motion.div
+                  custom={1}
+                  initial="hidden"
+                  animate="visible"
+                  variants={cardVariants}
+                >
+                  <MorningBriefingCard 
+                    userId={currentUser.uid}
+                    stealthActive={stealthActive}
+                    pendingTasksCount={tasks.filter(t => !t.completed).length}
+                    lastSovereigntyScore={db.calculateSovereigntyScore(currentUser.uid).score}
+                    predictedSafeWindow="5:00 AM — 8:00 AM"
+                    lastJournalMood={(() => {
+                      const jrnl = db.get<any>(currentUser.uid, "journal_entries");
+                      if (jrnl && jrnl.length > 0) {
+                        const sorted = [...jrnl].sort((a,b) => b.created_at.localeCompare(a.created_at));
+                        return sorted[0].mood;
+                      }
+                      return "Okay";
+                    })()}
+                  />
+                </motion.div>
 
                 {/* 2. Affirmation card (dismissable) */}
                 {!todayAffirmationDismissed && (
-                  <div className={`p-5 rounded-xl border border-[#EDE8E0] flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 transition-all bg-white border-l-4 ${
-                    stealthActive ? "border-l-blue-600" : "border-l-[#7C2D3E]"
-                  }`}>
+                  <motion.div 
+                    custom={2}
+                    initial="hidden"
+                    animate="visible"
+                    variants={cardVariants}
+                    className={`p-5 rounded-xl border border-[#EDE8E0] flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 transition-all bg-white border-l-4 ${
+                      stealthActive ? "border-l-blue-600" : "border-l-[#7C2D3E]"
+                    }`}
+                  >
                     <div className="flex gap-3">
                       <Sparkles className={`w-5 h-5 flex-shrink-0 mt-0.5 ${stealthActive ? "text-blue-600" : "text-[#7C2D3E]"}`} />
                       <blockquote className="text-sm text-[#1A1414] font-serif italic leading-relaxed">
@@ -1665,14 +1727,18 @@ export default function App() {
                     >
                       Got It
                     </button>
-                  </div>
+                  </motion.div>
                 )}
 
                 {/* Stats layout: Sovereign Card and Reclaimed Card side-by-side or stacked cleanly */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   
                   {/* 3. Sovereignty Score hero card (Centered Ring SVG with Lora Gold numeric core) */}
-                  <div 
+                  <motion.div 
+                    custom={3}
+                    initial="hidden"
+                    animate="visible"
+                    variants={cardVariants}
                     onClick={() => setActiveTab("score")}
                     className="bg-white border border-[#EDE8E0] rounded-xl p-6 shadow-xs cursor-pointer hover:border-[#7C2D3E]/30 transition-all text-center space-y-4"
                   >
@@ -1721,10 +1787,14 @@ export default function App() {
                         {stealthActive ? "Syllabus Standard Strong" : "Holding Ground ⚔️"}
                       </span>
                     </div>
-                  </div>
+                  </motion.div>
 
                   {/* 4. Hours Reclaimed Card */}
-                  <div 
+                  <motion.div 
+                    custom={4}
+                    initial="hidden"
+                    animate="visible"
+                    variants={cardVariants}
                     onClick={() => setActiveTab("checkin")}
                     className="bg-white border border-[#EDE8E0] rounded-xl p-6 shadow-xs cursor-pointer hover:border-gray-300 transition-all flex flex-col justify-between min-h-[220px]"
                   >
@@ -1749,7 +1819,7 @@ export default function App() {
                         Add New Sovereignty Audit Log →
                       </span>
                     </div>
-                  </div>
+                  </motion.div>
 
                 </div>
 
@@ -1757,7 +1827,11 @@ export default function App() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   
                   {/* Live Mini Heatmap Preview Card */}
-                  <div 
+                  <motion.div 
+                    custom={5}
+                    initial="hidden"
+                    animate="visible"
+                    variants={cardVariants}
                     onClick={() => setActiveTab("heatmap")}
                     className="bg-white border border-[#EDE8E0] rounded-xl p-5 shadow-xs cursor-pointer hover:border-[#7C2D3E]/20 transition-all space-y-4"
                   >
@@ -1786,10 +1860,16 @@ export default function App() {
                     <p className="text-[11px] font-sans text-center text-gray-500">
                       Our metrics reveal heavy chore spikes on weekend mornings. View detail map trends →
                     </p>
-                  </div>
+                  </motion.div>
 
                   {/* Today's Safe Study Windows */}
-                  <div className="bg-white border border-[#EDE8E0] rounded-xl p-5 shadow-xs space-y-4">
+                  <motion.div 
+                    custom={6}
+                    initial="hidden"
+                    animate="visible"
+                    variants={cardVariants}
+                    className="bg-white border border-[#EDE8E0] rounded-xl p-5 shadow-xs space-y-4"
+                  >
                     <div className="flex justify-between items-center border-b border-gray-100 pb-2">
                       <span className="text-[10px] uppercase font-extrabold tracking-widest text-[#7A6860]">
                         {stealthActive ? "PREDICTED STUDY WINDOWS" : "TODAY'S SAFE STUDY WINDOWS"}
@@ -1816,12 +1896,18 @@ export default function App() {
                         <span className="text-xs font-semibold text-[#7A6860] font-mono">60%</span>
                       </div>
                     </div>
-                  </div>
+                  </motion.div>
 
                 </div>
 
                 {/* 6. Pending tasks preview (top 3) with direct check triggers */}
-                <div className="bg-white border border-[#EDE8E0] rounded-xl p-5 shadow-xs space-y-4">
+                <motion.div 
+                  custom={7}
+                  initial="hidden"
+                  animate="visible"
+                  variants={cardVariants}
+                  className="bg-white border border-[#EDE8E0] rounded-xl p-5 shadow-xs space-y-4"
+                >
                   <div className="flex justify-between items-center border-b border-gray-100 pb-2">
                     <div className="flex items-center gap-1.5 col">
                       <span className="text-[10px] uppercase font-extrabold tracking-widest text-[#7A6860]">
@@ -1861,10 +1947,14 @@ export default function App() {
                       ))}
                     </div>
                   )}
-                </div>
+                </motion.div>
 
                 {/* 7. Tomorrow's forecast (if unlocked) */}
-                <div 
+                <motion.div 
+                  custom={8}
+                  initial="hidden"
+                  animate="visible"
+                  variants={cardVariants}
                   onClick={() => setActiveTab("predict")}
                   className="bg-white border border-[#EDE8E0] rounded-xl p-6 shadow-xs cursor-pointer hover:border-[#7C2D3E]/20 transition-all"
                 >
@@ -1903,14 +1993,14 @@ export default function App() {
                       </div>
                     </div>
                   )}
-                </div>
+                </motion.div>
 
               </div>
             )}
 
             {/* View Check-In Log (Feature 6 & Audit Log) */}
             {activeTab === "checkin" && (
-              <div id="checkin_tab" className="space-y-6 max-w-xl mx-auto">
+              <motion.div initial="hidden" animate="visible" variants={tabContentVariants} id="checkin_tab" className="space-y-6 max-w-xl mx-auto">
                 <div>
                   <h2 className={`text-2xl font-bold tracking-tight ${stealthActive ? "font-sans text-gray-900" : "font-serif text-amber-900"}`}>
                     {stealthActive ? "Log Study Status" : "Log Sovereignty Audit"}
@@ -2013,12 +2103,12 @@ export default function App() {
                     {stealthActive ? "Log Scheduled Task" : "Log Sovereignty Audit"}
                   </button>
                 </form>
-              </div>
+              </motion.div>
             )}
 
             {/* View Checklist */}
             {activeTab === "tasks" && (
-              <div id="tasks_tab" className="space-y-6 max-w-xl mx-auto">
+              <motion.div initial="hidden" animate="visible" variants={tabContentVariants} id="tasks_tab" className="space-y-6 max-w-xl mx-auto">
                 <div>
                   <h2 className={`text-2xl font-bold tracking-tight ${stealthActive ? "font-sans text-gray-900" : "font-serif text-amber-900"}`}>
                     {stealthActive ? "Task Syllabus" : "Sovereignty Success Checklist"}
@@ -2101,21 +2191,23 @@ export default function App() {
                     );
                   })}
                 </div>
-              </div>
+              </motion.div>
             )}
 
             {/* View Rehearse (Conversational Playground) */}
             {activeTab === "rehearse" && (
-              <RehearsePlayground 
-                user={currentUser} 
-                stealthActive={stealthActive} 
-                onSessionComplete={handleRehearseCallback} 
-              />
+              <motion.div initial="hidden" animate="visible" variants={tabContentVariants}>
+                <RehearsePlayground 
+                  user={currentUser} 
+                  stealthActive={stealthActive} 
+                  onSessionComplete={handleRehearseCallback} 
+                />
+              </motion.div>
             )}
 
             {/* View Calm Guided Breathing (Feature 6) */}
             {activeTab === "calm" && (
-              <div id="calm_section" className="space-y-6 max-w-5xl mx-auto">
+              <motion.div initial="hidden" animate="visible" variants={tabContentVariants} id="calm_section" className="space-y-6 max-w-5xl mx-auto">
                 <div className="border-b border-[#EDE8E0] pb-4">
                   <h2 className={`text-2xl font-bold tracking-tight ${stealthActive ? "font-sans text-gray-900" : "font-serif text-amber-900"}`}>
                     {stealthActive ? "Academic Calm Zone" : "Therapeutic Coping & Calm Zone"}
@@ -2193,12 +2285,12 @@ export default function App() {
                   </div>
 
                 </div>
-              </div>
+              </motion.div>
             )}
 
             {/* View Trends (Analytics) */}
             {activeTab === "trends" && (
-              <div id="trends_section" className="space-y-6 max-w-4xl mx-auto">
+              <motion.div initial="hidden" animate="visible" variants={tabContentVariants} id="trends_section" className="space-y-6 max-w-4xl mx-auto">
                 <div>
                   <h2 className={`text-2xl font-bold tracking-tight ${stealthActive ? "font-sans text-gray-900" : "font-serif text-amber-900"}`}>
                     {stealthActive ? "Weekly Progress Statistics" : "Sovereignty Patterns & Trends"}
@@ -2235,37 +2327,49 @@ export default function App() {
                     </p>
                   </div>
                 </div>
-              </div>
+              </motion.div>
             )}
 
             {/* View Sovereignty Score (Feature 2) */}
             {activeTab === "score" && (
-              <SovereigntyScoreView userId={currentUser.uid} stealthActive={stealthActive} />
+              <motion.div initial="hidden" animate="visible" variants={tabContentVariants}>
+                <SovereigntyScoreView userId={currentUser.uid} stealthActive={stealthActive} />
+              </motion.div>
             )}
 
             {/* View Weekly Sovereignty Report (Feature 3) */}
             {activeTab === "report" && (
-              <WeeklyReportView user={currentUser} stealthActive={stealthActive} />
+              <motion.div initial="hidden" animate="visible" variants={tabContentVariants}>
+                <WeeklyReportView user={currentUser} stealthActive={stealthActive} />
+              </motion.div>
             )}
 
             {/* View Safe Circles (Feature 4) */}
             {activeTab === "circles" && (
-              <SafeCirclesView user={currentUser} stealthActive={stealthActive} />
+              <motion.div initial="hidden" animate="visible" variants={tabContentVariants}>
+                <SafeCirclesView user={currentUser} stealthActive={stealthActive} />
+              </motion.div>
             )}
 
             {/* View Pattern Predictions (Feature 5) */}
             {activeTab === "predict" && (
-              <PatternPredictionView user={currentUser} stealthActive={stealthActive} />
+              <motion.div initial="hidden" animate="visible" variants={tabContentVariants}>
+                <PatternPredictionView user={currentUser} stealthActive={stealthActive} />
+              </motion.div>
             )}
 
             {/* View Journal (New) */}
             {activeTab === "journal" && (
-              <HeyvinJournalView userId={currentUser.uid} stealthActive={stealthActive} />
+              <motion.div initial="hidden" animate="visible" variants={tabContentVariants}>
+                <HeyvinJournalView userId={currentUser.uid} stealthActive={stealthActive} />
+              </motion.div>
             )}
 
             {/* View Friction Map (New) */}
             {activeTab === "heatmap" && (
-              <FrictionHeatmapView userId={currentUser.uid} stealthActive={stealthActive} />
+              <motion.div initial="hidden" animate="visible" variants={tabContentVariants}>
+                <FrictionHeatmapView userId={currentUser.uid} stealthActive={stealthActive} />
+              </motion.div>
             )}
 
             {/* View Emergency Focus Lock Takeover */}
