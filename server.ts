@@ -1,7 +1,6 @@
 import express from "express";
 import path from "path";
 import { fileURLToPath } from "url";
-import { createServer as createViteServer } from "vite";
 import { GoogleGenAI } from "@google/genai";
 import { rateLimit } from "express-rate-limit";
 import crypto from "crypto";
@@ -979,6 +978,7 @@ app.get(["/auth/callback", "/auth/callback/", "/api/auth/callback", "/api/auth/c
 // Setup Vite Dev server / Serve built files in production
 async function start() {
   if (process.env.NODE_ENV !== "production") {
+    const { createServer: createViteServer } = await import("vite");
     const vite = await createViteServer({
       server: { middlewareMode: true },
       appType: "spa",
