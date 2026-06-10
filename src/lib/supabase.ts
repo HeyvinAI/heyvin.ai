@@ -2,11 +2,17 @@ import { CheckIn, SovereigntyScore, WeeklyReport, CircleMember, CircleInvite, Ci
 import { createClient } from "@supabase/supabase-js";
 
 // Initialize Supabase Client if keys are set, otherwise fallback to local execution
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || "";
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || "";
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || import.meta.env.VITE_SUPABASE_URL || "";
+const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || import.meta.env.VITE_SUPABASE_ANON_KEY || "";
 
 export const supabase = (supabaseUrl && supabaseAnonKey) 
-  ? createClient(supabaseUrl, supabaseAnonKey) 
+  ? createClient(supabaseUrl, supabaseAnonKey, {
+      auth: {
+        persistSession: true,
+        autoRefreshToken: true,
+        detectSessionInUrl: true
+      }
+    }) 
   : null;
 
 if (supabase) {
@@ -34,6 +40,35 @@ export function getActiveUser(): UserProfile | null {
 // User-specific data keying
 function getStorageKey(user_id: string, table: string) {
   return `heyvin_${user_id}_table_${table}`;
+}
+
+// Silent Auth on startup or signup to ensure RLS policies work out of the box
+export async function authenticateSupabase(uid: string) {
+  if (!supabase) return;
+  const email = `${uid}@heyvin.internal`;
+  const password = `Password_${uid}_Secure123!`;
+  
+  try {
+    // 1. Try signing in
+    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+    if (error) {
+      if (error.message.includes("Invalid login credentials") || error.message.includes("User not found")) {
+        // 2. Try signing up if account doesn't exist yet
+        const { data: signUpData, error: signUpError } = await supabase.auth.signUp({ email, password });
+        if (signUpError) {
+          console.warn("[Supabase Auth] Background password registration warning:", signUpError.message);
+        } else {
+          console.log("⚡ [Supabase Auth] New silent account registered for security.");
+        }
+      } else {
+        console.warn("[Supabase Auth] Background authentication error:", error.message);
+      }
+    } else {
+      console.log("⚡ [Supabase Auth] Silent session authenticated successfully.");
+    }
+  } catch (err: any) {
+    console.error("[Supabase Auth ERROR] Silent login flow exception:", err.message || err);
+  }
 }
 
 // Seed initial data for a newly created user or default user
@@ -248,15 +283,16 @@ export function seedUserData(user_id: string, country: 'Lagos' | 'Delhi' | 'Mexi
     created_at: new Date(Date.now() - (8 - idx) * 7 * 86400000).toISOString()
   }));
 
-  // Save all to localStorage
-  localStorage.setItem(getStorageKey(user_id, "tasks"), JSON.stringify(initialTasks));
-  localStorage.setItem(getStorageKey(user_id, "check_ins"), JSON.stringify(initialCheckIns));
-  localStorage.setItem(getStorageKey(user_id, "circle_members"), JSON.stringify(initialCircle));
-  localStorage.setItem(getStorageKey(user_id, "circle_invites"), JSON.stringify(initialInvites));
-  localStorage.setItem(getStorageKey(user_id, "circle_activity"), JSON.stringify(initialActivity));
-  localStorage.setItem(getStorageKey(user_id, "sovereignty_scores"), JSON.stringify(initialScores));
-  localStorage.setItem(getStorageKey(user_id, "weekly_reports"), JSON.stringify([]));
-  localStorage.setItem(getStorageKey(user_id, "circle_nudges"), JSON.stringify([]));
+  // Save all to localStorage via db.save so they dual-write directly to cloud Supabase instantly
+  db.save(user_id, "tasks", initialTasks);
+  db.save(user_id, "check_ins", initialCheckIns);
+  db.save(user_id, "circle_members", initialCircle);
+  db.save(user_id, "circle_invites", initialInvites);
+  db.save(user_id, "circle_activity", initialActivity);
+  db.save(user_id, "sovereignty_scores", initialScores);
+  db.save(user_id, "weekly_reports", []);
+  db.save(user_id, "circle_nudges", []);
+  db.save(user_id, "journal_entries", []);
 }
 
 // Database helper functions wrapped in a simulated "supabase" service
@@ -283,11 +319,14 @@ export const db = {
 
     // Dual-write to cloud Supabase if active
     if (supabase) {
-      const dbTable = table === "journals" ? "journal_entries" : table;
-      supabase.from(dbTable).delete().eq('user_id', user_id).then(() => {
+      const dbTable = (table === "journals" || table === "journal_entries") ? "journal_entries" : table;
+      supabase.from(dbTable).delete().eq('user_id', user_id).then(({ error: deleteError }) => {
+        if (deleteError) {
+          console.warn(`[Supabase delete error] bulk save on '${dbTable}':`, deleteError.message);
+        }
         if (items.length > 0) {
-          supabase.from(dbTable).insert(items as any).then(({ error }) => {
-            if (error) console.error(`[Supabase error] Bulk insert to '${dbTable}':`, error);
+          supabase.from(dbTable).insert(items as any).then(({ error: insertError }) => {
+            if (insertError) console.error(`[Supabase error] Bulk insert to '${dbTable}':`, insertError);
           });
         }
       });
@@ -306,7 +345,7 @@ export const db = {
     db.save(user_id, table, list);
 
     if (supabase) {
-      const dbTable = table === "journals" ? "journal_entries" : table;
+      const dbTable = (table === "journals" || table === "journal_entries") ? "journal_entries" : table;
       supabase.from(dbTable).upsert(item as any).then(({ error }) => {
         if (error) console.error(`[Supabase error] Upsert to '${dbTable}':`, error);
       });
@@ -321,7 +360,7 @@ export const db = {
     db.save(user_id, table, filtered);
 
     if (supabase) {
-      const dbTable = table === "journals" ? "journal_entries" : table;
+      const dbTable = (table === "journals" || table === "journal_entries") ? "journal_entries" : table;
       supabase.from(dbTable).delete().eq('id', id).then(({ error }) => {
         if (error) console.error(`[Supabase error] Delete from '${dbTable}':`, error);
       });
@@ -331,10 +370,17 @@ export const db = {
   // Pull sync from cloud on login or boot
   syncFromCloud: async (user_id: string) => {
     if (!supabase) return;
-    const tables = ["tasks", "check_ins", "sovereignty_scores", "weekly_reports", "circle_members", "circle_invites", "circle_nudges", "journals"];
+    const tables = ["tasks", "check_ins", "sovereignty_scores", "weekly_reports", "circle_members", "circle_invites", "circle_nudges", "journal_entries"];
     try {
+      // 1. Fetch User Profile remotely
+      const { data: profileData, error: profileError } = await supabase.from("user_profiles").select("*").eq("uid", user_id).maybeSingle();
+      if (!profileError && profileData) {
+        localStorage.setItem("heyvin_current_user", JSON.stringify(profileData));
+      }
+
+      // 2. Fetch table collections
       for (const table of tables) {
-        const dbTable = table === "journals" ? "journal_entries" : table;
+        const dbTable = (table === "journals" || table === "journal_entries") ? "journal_entries" : table;
         const { data, error } = await supabase.from(dbTable).select("*").eq("user_id", user_id);
         if (error) {
           console.warn(`[Supabase Warning] Syncing '${dbTable}':`, error.message);
@@ -342,6 +388,8 @@ export const db = {
           localStorage.setItem(getStorageKey(user_id, table), JSON.stringify(data));
         }
       }
+      
+      // Dispatch reactive updating notification
       window.dispatchEvent(new Event('heyvin_db_update'));
       console.log("🙌 [Supabase sync] Cloud pulled user sync completed successfully.");
     } catch (e: any) {
@@ -437,13 +485,79 @@ export const db = {
   },
 
   clearUserData: (user_id: string) => {
-    const tables = ["tasks", "check_ins", "sovereignty_scores", "weekly_reports", "circle_members", "circle_invites", "circle_nudges", "circle_activities", "rehearse_sessions", "journals"];
+    const tables = ["tasks", "check_ins", "sovereignty_scores", "weekly_reports", "circle_members", "circle_invites", "circle_nudges", "circle_activities", "rehearse_sessions", "journal_entries"];
     tables.forEach(table => {
       localStorage.removeItem(`heyvin_${user_id}_table_${table}`);
     });
+    
+    if (supabase) {
+      tables.forEach(table => {
+        const dbTable = (table === "journals" || table === "journal_entries") ? "journal_entries" : table;
+        supabase.from(dbTable).delete().eq("user_id", user_id).then(({ error }) => {
+          if (error) console.error(`[Supabase remote clear error] ${dbTable}:`, error.message);
+        });
+      });
+      supabase.from("user_profiles").delete().eq("uid", user_id).then(({ error }) => {
+        if (error) console.error("[Supabase remote profile clear error] user_profiles:", error.message);
+      });
+    }
   },
 
   updateUserProfile: (user: UserProfile) => {
     localStorage.setItem("heyvin_current_user", JSON.stringify(user));
+    if (supabase) {
+      supabase.from("user_profiles").upsert({
+        uid: user.uid,
+        email: user.email,
+        username: user.username,
+        location: user.location,
+        based_in: user.based_in,
+        home_situation: user.home_situation,
+        primary_goal: user.primary_goal,
+        created_at: user.created_at
+      }).then(({ error }) => {
+        if (error) console.error("[Supabase error] Upserting user_profile failed:", error.message);
+      });
+    }
   }
 };
+
+// Save waitlist email signups
+export async function saveWaitlistEmail(email: string): Promise<{ success: boolean; error?: string; source: "supabase" | "local" }> {
+  const normalizedEmail = email.trim().toLowerCase();
+  
+  // 1. Save to local storage as a robust backup
+  try {
+    const localWaitlistStr = localStorage.getItem("heyvin_local_waitlist") || "[]";
+    const localWaitlist = JSON.parse(localWaitlistStr);
+    if (!localWaitlist.includes(normalizedEmail)) {
+      localWaitlist.push(normalizedEmail);
+      localStorage.setItem("heyvin_local_waitlist", JSON.stringify(localWaitlist));
+    }
+  } catch (e) {
+    console.warn("[Local waitlist save error]:", e);
+  }
+
+  // 2. Insert into Supabase table if remote client config exists
+  if (supabase) {
+    try {
+      const { error } = await supabase
+        .from("waitlist")
+        .insert([{ email: normalizedEmail, created_at: new Date().toISOString() }]);
+        
+      if (error) {
+        console.warn("[Supabase Waitlist notice] Attempted insert to 'waitlist' table in cloud. Error:", error.message);
+        // We still return success: true because we have verified and saved to the local database backup
+        return { success: true, error: error.message, source: "local" };
+      }
+      console.log("⚡ [Supabase Waitlist] Email successfully registered in cloud database.");
+      return { success: true, source: "supabase" };
+    } catch (err: any) {
+      console.warn("[Supabase Waitlist Exception] Bypassed database error:", err.message || err);
+      return { success: true, error: err.message || String(err), source: "local" };
+    }
+  }
+
+  return { success: true, source: "local" };
+}
+

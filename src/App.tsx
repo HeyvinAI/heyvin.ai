@@ -7,7 +7,7 @@ import {
   Youtube, BookText, Map as MapIcon, Settings
 } from "lucide-react";
 import { UserProfile, CheckIn, Task, SovereigntyScore, WeeklyReport, RehearseSession } from "./types";
-import { db, getActiveUser, seedUserData } from "./lib/supabase";
+import { db, getActiveUser, seedUserData, authenticateSupabase } from "./lib/supabase";
 import { getAffirmation } from "./data/affirmations";
 
 // Modular Views
@@ -28,6 +28,7 @@ import { SovereignSettingsView } from "./components/SovereignSettingsView";
 import { SovereignChroniclesFeed } from "./components/SovereignChroniclesFeed";
 import { LandingInteractiveShowcase } from "./components/LandingInteractiveShowcase";
 import ConfettiCelebration from "./components/ConfettiCelebration";
+import { WaitlistLandingView } from "./components/WaitlistLandingView";
 
 const cardVariants = {
   hidden: { opacity: 0, y: 15 },
@@ -54,8 +55,27 @@ const tabContentVariants = {
 export default function App() {
   const [currentUser, setCurrentUser] = useState<UserProfile | null>(null);
   
+  // Custom vanilla routing for /landing
+  const [currentPath, setCurrentPath] = useState(() => window.location.pathname);
+
+  useEffect(() => {
+    const handlePopState = () => {
+      setCurrentPath(window.location.pathname);
+    };
+    window.addEventListener("popstate", handlePopState);
+    return () => {
+      window.removeEventListener("popstate", handlePopState);
+    };
+  }, []);
+
+  const navigateTo = (path: string) => {
+    window.history.pushState({}, "", path);
+    setCurrentPath(path);
+  };
+  
   // Navigation
   const [activeTab, setActiveTab] = useState<string>("today");
+
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   // Global Theme State: 'haven' (light) or 'dark' (high-contrast late-night studying)
@@ -131,9 +151,11 @@ export default function App() {
     if (sessionUser) {
       setCurrentUser(sessionUser);
       loadUserData(sessionUser.uid);
-      // Active pull sync from Supabase if keys exist
-      db.syncFromCloud(sessionUser.uid).then(() => {
-        loadUserData(sessionUser.uid);
+      // Active pull sync from Supabase if keys exist (with background auth)
+      authenticateSupabase(sessionUser.uid).then(() => {
+        db.syncFromCloud(sessionUser.uid).then(() => {
+          loadUserData(sessionUser.uid);
+        });
       });
     }
   }, []);
@@ -288,6 +310,11 @@ export default function App() {
     localStorage.setItem("heyvin_current_user", JSON.stringify(profile));
     setCurrentUser(profile);
     loadUserData(uid);
+
+    // Silent background registration & profile save to Supabase
+    authenticateSupabase(uid).then(() => {
+      db.updateUserProfile(profile);
+    });
     
     // Auto-trigger sunday report modal toast inside system
     setTimeout(() => {
@@ -674,7 +701,14 @@ export default function App() {
     ? "bg-slate-950 text-slate-100 dark"
     : "bg-[#FAF7F2] text-[#1A1414]";
 
+  const isWaitlistLanding = currentPath.replace(/\/$/, "") === "/landing";
+
+  if (isWaitlistLanding) {
+    return <WaitlistLandingView onNavigateToApp={() => navigateTo("/")} />;
+  }
+
   return (
+
     <div className={`min-h-screen flex flex-col font-sans transition-colors duration-300 ${themeClassContent} ${theme === 'dark' ? 'dark' : ''} relative overflow-hidden`}>
       
       {/* Subtle Centered Background Logo Theme */}
@@ -838,7 +872,14 @@ export default function App() {
                     >
                       <span>Direct Onboarding Entrance</span>
                     </button>
+                    <button
+                      onClick={() => navigateTo('/landing')}
+                      className="px-5 py-3 rounded-xl text-xs uppercase font-extrabold tracking-wider border border-[#7C2D3E]/30 bg-[#7C2D3E]/5 hover:bg-[#7C2D3E]/10 text-[#7C2D3E] transition-all cursor-pointer inline-flex items-center gap-1.5"
+                    >
+                      <span>Waitlist Portal</span>
+                    </button>
                   </div>
+
                 </div>
 
                 {/* Promo Quick Register Form Card */}

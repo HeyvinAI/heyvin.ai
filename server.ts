@@ -44,11 +44,16 @@ const aiLoggerMiddleware = (req: any, res: any, next: any) => {
     const duration = Date.now() - start;
     const userId = req.body?.user_id || req.body?.userId || req.body?.userData?.uid || req.headers?.["user-id"] || "anonymous";
     const status = res.statusCode >= 200 && res.statusCode < 300 ? "success" : "error";
+    const endpointPath = req.originalUrl || req.url;
 
     console.log(JSON.stringify({
       timestamp: new Date().toISOString(),
+      userId: userId,
       user_id: userId,
-      endpoint: req.originalUrl || req.url,
+      routeName: endpointPath,
+      route: endpointPath,
+      endpoint: endpointPath,
+      responseTimeMs: duration,
       response_time_ms: duration,
       status: status,
       status_code: res.statusCode,
