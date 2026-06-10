@@ -1239,18 +1239,18 @@ export function LandingInteractiveShowcase({ onSignUpClick }: LandingInteractive
       </section>
 
       {/* FINAL HIGH-CONVERSION CTA PROMOTION */}
-      <section className="bg-gradient-to-br from-[#7C2D3E] to-[#5a1b28] text-white rounded-3xl p-8 sm:p-10 text-center space-y-6 relative overflow-hidden shadow-xl mt-8">
-        <div className="absolute top-0 left-0 w-32 h-32 bg-white/5 rounded-full blur-2xl pointer-events-none" />
-        <div className="absolute bottom-0 right-0 w-32 h-32 bg-amber-500/10 rounded-full blur-2xl pointer-events-none" />
+      <section className="bg-gradient-to-br from-[#40121a] via-[#1b080b] to-[#25090f] text-white rounded-3xl p-8 sm:p-10 text-center space-y-6 relative overflow-hidden shadow-2xl mt-8 border border-red-950">
+        <div className="absolute top-0 left-0 w-32 h-32 bg-amber-500/5 rounded-full blur-2xl pointer-events-none" />
+        <div className="absolute bottom-0 right-0 w-32 h-32 bg-[#7C2D3E]/20 rounded-full blur-2xl pointer-events-none" />
         
         <div className="space-y-3 relative z-10 max-w-2xl mx-auto">
-          <span className="text-[10px] uppercase font-bold tracking-widest text-[#E28E75] bg-red-950/40 px-3.5 py-1 rounded-full">
+          <span className="text-[10px] uppercase font-bold tracking-widest text-amber-300 bg-amber-950/70 border border-amber-500/20 px-3.5 py-1 rounded-full">
             100% Free & Device-Isolated
           </span>
-          <h2 className="text-3xl sm:text-4xl font-serif font-black text-white leading-tight">
+          <h2 className="text-3xl sm:text-4xl font-serif font-black text-amber-50 leading-tight">
             Ready to claim complete study authority?
           </h2>
-          <p className="text-xs sm:text-sm text-rose-150/90 leading-relaxed max-w-lg mx-auto">
+          <p className="text-xs sm:text-sm text-rose-100/90 leading-relaxed max-w-lg mx-auto font-sans font-medium">
             Create your local pseudonym profile under 30 seconds. Sync with secure Google OAuth calendars without exposing a single pixel of your personal life.
           </p>
         </div>

@@ -4,7 +4,7 @@ import {
   Sun, Moon, Shield, Lock, Unlock, Crown, Users, FileText, Sparkles, Brain, Compass, 
   LogOut, ArrowRight, Check, Plus, AlertCircle, RefreshCw, Smartphone, TrendingUp, Info, 
   Heart, Calendar, Menu, X, HelpCircle, Eye, ChevronLeft, Target, Volume2, User, Database,
-  Youtube, BookText, Map as MapIcon, Settings
+  Youtube, BookText, Map as MapIcon, Settings, MessageSquare
 } from "lucide-react";
 import { UserProfile, CheckIn, Task, SovereigntyScore, WeeklyReport, RehearseSession } from "./types";
 import { db, getActiveUser, seedUserData, authenticateSupabase } from "./lib/supabase";
@@ -29,6 +29,8 @@ import { SovereignChroniclesFeed } from "./components/SovereignChroniclesFeed";
 import { LandingInteractiveShowcase } from "./components/LandingInteractiveShowcase";
 import ConfettiCelebration from "./components/ConfettiCelebration";
 import { WaitlistLandingView } from "./components/WaitlistLandingView";
+import { PremiumUnlockScreen } from "./components/PremiumUnlockScreen";
+import { SovereignHotlineView } from "./components/SovereignHotlineView";
 
 const cardVariants = {
   hidden: { opacity: 0, y: 15 },
@@ -78,23 +80,51 @@ export default function App() {
 
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
+  // Global Sovereignty Premium State
+  const [isPremiumUnlocked, setIsPremiumUnlocked] = useState<boolean>(() => {
+    return localStorage.getItem("heyvin_premium_unlocked") === "true";
+  });
+
+  const [showThemePremiumModal, setShowThemePremiumModal] = useState(false);
+
   // Global Theme State: 'haven' (light) or 'dark' (high-contrast late-night studying)
   const [theme, setTheme] = useState<'haven' | 'dark'>(() => {
     return (localStorage.getItem("heyvin_theme") as 'haven' | 'dark') || "haven";
   });
 
   const toggleTheme = () => {
+    if (theme === 'haven' && !isPremiumUnlocked) {
+      setShowThemePremiumModal(true);
+      return;
+    }
     setTheme(prev => (prev === 'dark' ? 'haven' : 'dark'));
   };
 
   useEffect(() => {
     localStorage.setItem("heyvin_theme", theme);
-    if (theme === 'dark') {
+    if (theme === 'dark' && isPremiumUnlocked) {
       document.documentElement.classList.add('dark');
     } else {
+      setTheme('haven');
       document.documentElement.classList.remove('dark');
     }
-  }, [theme]);
+  }, [theme, isPremiumUnlocked]);
+
+  const handleUnlockPremium = () => {
+    setIsPremiumUnlocked(true);
+    localStorage.setItem("heyvin_premium_unlocked", "true");
+    triggerSuccessToast("👑 Sovereignty Gold Tier Unlocked Successfully! ✨");
+    setShowConfetti(true);
+    setShowThemePremiumModal(false);
+  };
+
+  const handleLockPremium = () => {
+    setIsPremiumUnlocked(false);
+    localStorage.removeItem("heyvin_premium_unlocked");
+    setTheme('haven');
+    localStorage.setItem("heyvin_theme", "haven");
+    triggerSuccessToast("Sovereignty Premium simulated tier locked.");
+  };
 
   // Stealth Mode State
   const [stealthActive, setStealthActive] = useState<boolean>(() => {
@@ -224,8 +254,35 @@ export default function App() {
       }
     };
 
+    // 3. Robust LocalStorage Poller for same-origin cross-tab fallback when opener is blocked
+    const pollInterval = setInterval(() => {
+      try {
+        const stored = localStorage.getItem("heyvin_google_oauth_result");
+        if (stored) {
+          const parsed = JSON.parse(stored);
+          if (parsed && parsed.email && parsed.name) {
+            // Check if this result is recent (less than 2 minutes old) to avoid stale launches
+            if (Date.now() - (parsed.timestamp || 0) < 120000) {
+              setOauthLoading(false);
+              setSignupName(parsed.name);
+              setSignupEmail(parsed.email);
+              setGoogleAuthUser({ email: parsed.email, name: parsed.name });
+              triggerSuccessToast(`Google credentials connected: ${parsed.email} 🛡️`);
+              setSignUpStep(2);
+            }
+            localStorage.removeItem("heyvin_google_oauth_result");
+          }
+        }
+      } catch (e) {
+        console.error("Local storage poll issue:", e);
+      }
+    }, 1000);
+
     window.addEventListener('message', handleOAuthMessage);
-    return () => window.removeEventListener('message', handleOAuthMessage);
+    return () => {
+      window.removeEventListener('message', handleOAuthMessage);
+      clearInterval(pollInterval);
+    };
   }, []);
 
   const handleGoogleSignIn = async () => {
@@ -784,6 +841,54 @@ export default function App() {
         )}
       </AnimatePresence>
 
+      {/* Light/Dark mode premium modal gate */}
+      <AnimatePresence>
+        {showThemePremiumModal && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/65 backdrop-blur-sm z-50 flex items-center justify-center p-4 text-center font-sans"
+          >
+            <motion.div
+              initial={{ scale: 0.9, y: 15 }}
+              animate={{ scale: 1, y: 0 }}
+              exit={{ scale: 0.9, y: 15 }}
+              className="bg-white text-gray-900 rounded-2xl max-w-sm w-full p-6 shadow-2xl border border-amber-100 space-y-5 animate-scaleUp"
+            >
+              <div className="mx-auto w-12 h-12 bg-amber-50 rounded-full flex items-center justify-center text-amber-600 animate-pulse">
+                <Crown size={24} />
+              </div>
+              
+              <div className="space-y-2">
+                <h3 className="text-lg font-bold font-serif text-amber-950">Midnight Studying is Premium</h3>
+                <p className="text-xs text-gray-600 leading-relaxed">
+                  Late-night high-contrast dark theme is a <strong className="text-amber-800">Sovereignty Premium</strong> feature. Upgrade to gain instant access/toggle, plus unlock private journal sister-analysis, reports, maps, and anonymous study circles.
+                </p>
+              </div>
+
+              <div className="space-y-2 pt-2">
+                <button
+                  type="button"
+                  onClick={handleUnlockPremium}
+                  className="w-full py-3 rounded-xl text-xs font-bold text-[#FAF7F2] bg-amber-950 hover:bg-amber-900 active:scale-98 transition-all font-sans cursor-pointer flex items-center justify-center gap-2"
+                >
+                  <Sparkles size={14} className="text-amber-300" />
+                  <span>Instant Activate Premium ($4.99)</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setShowThemePremiumModal(false)}
+                  className="w-full py-2.5 rounded-xl text-xs font-semibold text-gray-500 hover:bg-gray-100 transition-all font-sans cursor-pointer"
+                >
+                  Keep standard light theme
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* Sunday/Monday report compiler toast alert notifier */}
       <AnimatePresence>
         {successToast && (
@@ -1041,28 +1146,28 @@ export default function App() {
           <div className="min-h-screen w-full grid grid-cols-1 lg:grid-cols-12 bg-[#FAF7F2] select-none">
             
             {/* Left Panel: Security Sandbox Indicator & Advisory Tips */}
-            <div className="lg:col-span-5 bg-[#7C2D3E] text-orange-50 p-8 sm:p-12 flex flex-col justify-between relative overflow-hidden">
+            <div className="lg:col-span-5 bg-gradient-to-br from-[#96374a] via-[#852d3f] to-[#7C2D3E] text-[#ffffff] p-8 sm:p-12 flex flex-col justify-between relative overflow-hidden border-r border-[#691a29]">
               {/* Subtle background glow */}
-              <div className="absolute -top-40 -left-40 w-96 h-96 bg-red-800/20 rounded-full blur-3xl pointer-events-none" />
-              <div className="absolute -bottom-40 -right-40 w-96 h-96 bg-rose-600/10 rounded-full blur-3xl pointer-events-none" />
+              <div className="absolute -top-20 -left-20 w-96 h-96 bg-[#c54961]/3 overlay rounded-full blur-3xl pointer-events-none" />
+              <div className="absolute -bottom-20 -right-20 w-96 h-96 bg-amber-500/15 rounded-full blur-3xl pointer-events-none" />
 
               <div className="space-y-8 relative z-10">
                 <button 
                   onClick={() => setGuestView('landing')} 
-                  className="text-orange-200 hover:text-white text-xs font-semibold flex items-center gap-1.5 transition-colors self-start cursor-pointer group"
+                  className="text-amber-200 hover:text-white text-xs font-semibold flex items-center gap-1.5 transition-colors self-start cursor-pointer group"
                 >
                   <ChevronLeft size={16} className="group-hover:-translate-x-1 transition-transform" /> Back to Landing Page
                 </button>
 
                 <div className="space-y-4">
-                  <span className="text-[9.5px] uppercase font-bold tracking-widest text-[#E28E75] bg-red-950/40 px-3 py-1 rounded-full inline-block">
-                    Zero-Telemetry Sandbox
+                  <span className="text-[10px] uppercase font-bold tracking-widest text-amber-300 bg-red-950/65 border border-amber-500/25 px-3.5 py-1.5 rounded-full inline-block">
+                    🛡️ Zero-Telemetry Sandbox
                   </span>
-                  <h2 className="text-3xl sm:text-4xl font-serif font-bold text-white tracking-tight leading-tight">
+                  <h2 className="text-3xl sm:text-4xl font-serif font-black text-white tracking-tight leading-tight">
                     Every Study Block, <br/>
-                    <span className="text-[#E28E75]">Utterly Confidential.</span>
+                    <span className="text-amber-200">Utterly Confidential.</span>
                   </h2>
-                  <p className="text-sm text-rose-100 leading-relaxed font-sans max-w-md">
+                  <p className="text-sm text-yellow-50/95 leading-relaxed font-sans max-w-md font-medium">
                     We do not store your reports, logs, or diary logs on global servers. Everything resides inside your physical browser cache proxy — completely immune to network intrusion.
                   </p>
                 </div>
@@ -1114,8 +1219,8 @@ export default function App() {
                 </a>
               </div>
             </div>
-            {/* Right Panel: Active Credential Forms */}
-            <div className="lg:col-span-7 p-6 sm:p-12 md:p-16 lg:p-20 flex flex-col justify-center max-w-4xl mx-auto w-full space-y-8 font-sans">
+            {/* Right Panel: Active Credential Forms (With overflow scrollbar support so next buttons are always fully accessible) */}
+            <div className="lg:col-span-7 p-6 sm:p-10 md:p-12 lg:p-14 overflow-y-auto max-h-screen w-full flex flex-col justify-center font-sans">
               
               {/* Stepper Progress Indicator */}
               <div className="flex items-center justify-between pb-4 border-b border-orange-100/30">
@@ -1544,7 +1649,7 @@ export default function App() {
           </header>
 
           {/* Sidebar Menu (Desktop) */}
-          <aside className={`hidden md:flex flex-col justify-between w-60 pt-20 pb-4 px-4 sticky top-0 h-screen z-10 transition-all ${themeClassSidebar}`}>
+          <aside className={`hidden md:flex flex-col justify-between w-60 pt-20 pb-4 px-4 sticky top-0 min-h-screen h-[100vh] flex-shrink-0 z-10 transition-all ${themeClassSidebar}`}>
             <nav className="space-y-1.5 flex-1 mt-4 overflow-y-auto pr-1">
               {/* Menu listings */}
               {[
@@ -1560,6 +1665,7 @@ export default function App() {
                 { id: "circles", icon: Users, label: "Circles", stealth: "Peer Group" },
                 { id: "predict", icon: Compass, label: "Predict", stealth: "Timeline" },
                 { id: "report", icon: FileText, label: "Weekly Report", stealth: "Syllabus Audit" },
+                { id: "hotline", icon: MessageSquare, label: "Sister Hotline", stealth: "Support Desk" },
                 { id: "settings", icon: Settings, label: "Settings", stealth: "System Configuration" }
               ].map((tab) => {
                 const Icon = tab.icon;
@@ -1662,6 +1768,7 @@ export default function App() {
                     { id: "circles", icon: Users, label: "Circles", stealth: "Peer Group" },
                     { id: "predict", icon: Compass, label: "Predict", stealth: "Timeline" },
                     { id: "report", icon: FileText, label: "Weekly Report", stealth: "Syllabus Audit" },
+                    { id: "hotline", icon: MessageSquare, label: "Sister Hotline", stealth: "Support Desk" },
                     { id: "settings", icon: Settings, label: "Settings", stealth: "System Configuration" }
                   ].map((tab) => {
                     const Icon = tab.icon;
@@ -2419,35 +2526,55 @@ export default function App() {
             {/* View Weekly Sovereignty Report (Feature 3) */}
             {activeTab === "report" && (
               <motion.div initial="hidden" animate="visible" variants={tabContentVariants}>
-                <WeeklyReportView user={currentUser} stealthActive={stealthActive} />
+                {isPremiumUnlocked ? (
+                  <WeeklyReportView user={currentUser} stealthActive={stealthActive} />
+                ) : (
+                  <PremiumUnlockScreen onUnlock={handleUnlockPremium} featureName="Weekly Report Audit" />
+                )}
               </motion.div>
             )}
 
             {/* View Safe Circles (Feature 4) */}
             {activeTab === "circles" && (
               <motion.div initial="hidden" animate="visible" variants={tabContentVariants}>
-                <SafeCirclesView user={currentUser} stealthActive={stealthActive} />
+                {isPremiumUnlocked ? (
+                  <SafeCirclesView user={currentUser} stealthActive={stealthActive} />
+                ) : (
+                  <PremiumUnlockScreen onUnlock={handleUnlockPremium} featureName="Safe Circles Peer Group" />
+                )}
               </motion.div>
             )}
 
             {/* View Pattern Predictions (Feature 5) */}
             {activeTab === "predict" && (
               <motion.div initial="hidden" animate="visible" variants={tabContentVariants}>
-                <PatternPredictionView user={currentUser} stealthActive={stealthActive} />
+                {isPremiumUnlocked ? (
+                  <PatternPredictionView user={currentUser} stealthActive={stealthActive} />
+                ) : (
+                  <PremiumUnlockScreen onUnlock={handleUnlockPremium} featureName="Predictive Stress Timeline Models" />
+                )}
               </motion.div>
             )}
 
             {/* View Journal (New) */}
             {activeTab === "journal" && (
               <motion.div initial="hidden" animate="visible" variants={tabContentVariants}>
-                <HeyvinJournalView userId={currentUser.uid} stealthActive={stealthActive} />
+                {isPremiumUnlocked ? (
+                  <HeyvinJournalView userId={currentUser.uid} stealthActive={stealthActive} />
+                ) : (
+                  <PremiumUnlockScreen onUnlock={handleUnlockPremium} featureName="Sovereign Chronicles Journal" />
+                )}
               </motion.div>
             )}
 
             {/* View Friction Map (New) */}
             {activeTab === "heatmap" && (
               <motion.div initial="hidden" animate="visible" variants={tabContentVariants}>
-                <FrictionHeatmapView userId={currentUser.uid} stealthActive={stealthActive} />
+                {isPremiumUnlocked ? (
+                  <FrictionHeatmapView userId={currentUser.uid} stealthActive={stealthActive} />
+                ) : (
+                  <PremiumUnlockScreen onUnlock={handleUnlockPremium} featureName="Friction Heatmap Maps" />
+                )}
               </motion.div>
             )}
 
@@ -2459,6 +2586,17 @@ export default function App() {
                 onExit={() => setActiveTab("today")}
                 onSignOut={handleSignOut}
               />
+            )}
+
+            {/* View Support Hotline (Premium Only Feature) */}
+            {activeTab === "hotline" && (
+              <motion.div initial="hidden" animate="visible" variants={tabContentVariants}>
+                {isPremiumUnlocked ? (
+                  <SovereignHotlineView user={currentUser} stealthActive={stealthActive} />
+                ) : (
+                  <PremiumUnlockScreen onUnlock={handleUnlockPremium} featureName="Sister's Personal Hotline support channel" />
+                )}
+              </motion.div>
             )}
 
             {/* View Sovereign Settings */}

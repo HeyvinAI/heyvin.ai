@@ -32,7 +32,7 @@ const aiRateLimiter = rateLimit({
   },
   standardHeaders: true,
   legacyHeaders: false,
-  validate: { ip: false },
+  validate: false,
 });
 
 // Feature 3: Structured JSON logging to the node console for production Vercel dashboards
@@ -471,6 +471,67 @@ Sound like a sharp, warm mentor. No fluff. No generic, overly dramatic motivatio
   }
 });
 
+// Premium Feature: Older Sister Support Hotline counselor endpoint
+app.post("/api/support/message", async (req, res) => {
+  const { message, category, counselor, userContext } = req.body;
+  if (!message) {
+    return res.status(400).json({ error: "Message text is required" });
+  }
+
+  const { username, basedIn, homeSituation } = userContext || {};
+
+  const systemInstructions = `You are ${counselor || 'an Older Sister Mentor'} at Heyvin.
+Your goal is to support and advise ${username || 'sister'}, a junior scholar operating under stressful domestic situations in ${basedIn || 'Lagos, Nigeria'}.
+She is living with: ${homeSituation || 'relatives'} and dealing with: "${category || 'Generic family pressure'}".
+
+Analyze her situation and write a deeply empathetic, highly encouraging, and strictly practical message. 
+Keep your response concise (between 80 to 140 words).
+
+In your answer:
+1. Speak with intense empathy, warmth, and sisterly care, acknowledging how difficult it is to balance intense research/software studies with intensive home or chore and electrical blackout responsibilities.
+2. Provide a concrete, tactical solution (e.g., an exact speech script she can use, how to negotiate a clear study window, or how to buffer spontaneous requests politely).
+3. Do not sound like a clinical chatbot. Use authentic local framing (e.g., if Lagos, speak directly about power generator cuts, heavy traffic, and respectful Nigerian family setups. If Delhi, talk about library slots, sibling interruptions, and Indian academic intensity).
+4. Do not include excessive bulleted bullet-points. Format as 2-3 short, beautifully spaced human-like paragraphs. No generic marketing or motivational buzzwords.`;
+
+  const inputContext = `User message: "${message}"
+Domestic background: Living in ${basedIn || 'Lagos'}, situation: "${homeSituation || 'spontaneous chores'}".`;
+
+  try {
+    const ai = getAI();
+    if (!ai) {
+      throw new Error("No Gemini client found");
+    }
+
+    const response = await withTimeout(
+      ai.models.generateContent({
+        model: "gemini-3.5-flash",
+        contents: [{ role: "user", parts: [{ text: inputContext }] }],
+        config: {
+          systemInstruction: systemInstructions,
+          temperature: 0.8
+        }
+      }),
+      5000,
+      "Older Sister connection timed out"
+    );
+
+    res.json({ reply: response.text || "", success: true });
+  } catch (error: any) {
+    console.warn("[Hotline AI Response Failed] Fallback selected:", error.message || error);
+    
+    // Fallback engine
+    let fallbackReply = `Sister, I hear you so clearly. Protecting your time in Lagos is a daily battle. Remember, saying 'I will handle this chore immediately at 12:00 PM once this homework module is submitted' is far more effective than an abrupt argument. Refocus on your morning slot, we have your back.`;
+    
+    if (String(basedIn).toLowerCase() === "india" || String(counselor).toLowerCase().includes("devika")) {
+      fallbackReply = `I understand completely, dear. In Delhi, libraries and silent rooftop slots are our sacred shields. When noisy family functions arise, prepare a simple, elegant 'No' script ahead of time. Your technical degree is the key to your future. Try to study for 45 minutes without looking at chat alerts, and we will talk again.`;
+    } else if (String(category).toLowerCase().includes("power") || String(category).toLowerCase().includes("utility")) {
+      fallbackReply = `Utility stress is real and exhausting. Try to pre-download lectures and compile code offline. Safeguard your phone's battery strictly for study modules and configure an alarm for 5:30 AM before household noise schedules commence. You are doing so well!`;
+    }
+
+    res.json({ reply: fallbackReply, success: false, note: "counselor-fallback-applied" });
+  }
+});
+
 // Memory store for premium subscribers (clears on server restarts, completely fine for this sandbox/deployment demonstration)
 const proSubscribers = new Set<string>();
 
@@ -495,11 +556,12 @@ app.post("/api/paystack/initialize", async (req, res) => {
   if (!paystackSecret) {
     console.log(`[PAYSTACK MOCK] Initializing transaction for user ${user_id} (${email}) amount: ₦2,000`);
     const reference = "MOCK_PAYSTACK_REF_" + Math.random().toString(36).substring(7);
+    const resolvedProtocol = req.headers["x-forwarded-proto"] === "https" ? "https" : (req.get("host")?.includes("localhost") ? "http" : "https");
     return res.json({
       status: true,
       message: "Authorization URL initialized (MOCK MODE)",
       data: {
-        authorization_url: `${req.protocol}://${req.get("host")}/api/paystack/mock-checkout?reference=${reference}&user_id=${user_id}`,
+        authorization_url: `${resolvedProtocol}://${req.get("host")}/api/paystack/mock-checkout?reference=${reference}&user_id=${user_id}`,
         access_code: "MOCK_CODE_" + reference,
         reference: reference
       }
@@ -875,6 +937,17 @@ app.get(["/auth/callback", "/auth/callback/", "/api/auth/callback", "/api/auth/c
           @keyframes spin { to { transform: rotate(360deg); } }
         </style>
         <script>
+          // Save connection payload to localStorage for bulletproof iframe-sandbox compatibility
+          try {
+            localStorage.setItem("heyvin_google_oauth_result", JSON.stringify({
+              email: "${email}",
+              name: "${name}",
+              timestamp: Date.now()
+            }));
+          } catch(e) {
+            console.error("Local storage sync error:", e);
+          }
+
           let sent = false;
           try {
             if (window.opener && typeof window.opener.postMessage === 'function') {
@@ -883,14 +956,19 @@ app.get(["/auth/callback", "/auth/callback/", "/api/auth/callback", "/api/auth/c
                 user: { email: "${email}", name: "${name}" } 
               }, '*');
               sent = true;
-              setTimeout(function() { window.close(); }, 500);
+              setTimeout(function() { window.close(); }, 800);
             }
           } catch (e) {
             console.error("Popup communication restricted", e);
           }
           
           if (!sent) {
-            window.location.href = '/?oauth_email=' + encodeURIComponent("${email}") + '&oauth_name=' + encodeURIComponent("${name}");
+            // Also keep URL params redirect as second safety fallback
+            setTimeout(function() {
+              window.location.href = '/?oauth_email=' + encodeURIComponent("${email}") + '&oauth_name=' + encodeURIComponent("${name}");
+            }, 500);
+          } else {
+            setTimeout(function() { window.close(); }, 1200);
           }
         </script>
       </body>
