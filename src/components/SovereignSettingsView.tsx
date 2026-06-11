@@ -32,11 +32,11 @@ export function SovereignSettingsView({ user, onUpdateUser, stealthActive }: Sov
 
   // Paystack high-fidelity express overlay simulation states
   const [showPaystackExpress, setShowPaystackExpress] = useState(false);
-  const [paystackCardNum, setPaystackCardNum] = useState("");
-  const [paystackExpiry, setPaystackExpiry] = useState("");
-  const [paystackCvv, setPaystackCvv] = useState("");
-  const [paystackPin, setPaystackPin] = useState("");
-  const [paystackOtp, setPaystackOtp] = useState("");
+  const [paystackCardNum, setPaystackCardNum] = useState("5089 8087 6550 1234");
+  const [paystackExpiry, setPaystackExpiry] = useState("12/28");
+  const [paystackCvv, setPaystackCvv] = useState("123");
+  const [paystackPin, setPaystackPin] = useState("1234");
+  const [paystackOtp, setPaystackOtp] = useState("1234");
   const [paystackStage, setPaystackStage] = useState<'form' | 'pin' | 'otp' | 'success'>('form');
   const [paystackLoadingText, setPaystackLoadingText] = useState("Connecting Secure Paystack Gateway...");
 
@@ -542,7 +542,8 @@ export function SovereignSettingsView({ user, onUpdateUser, stealthActive }: Sov
                     <button
                       type="submit"
                       disabled={paystackCardNum.length < 16 || paystackExpiry.length < 5 || paystackCvv.length < 3}
-                      className="w-full py-3 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-700 disabled:opacity-40 text-white font-extrabold text-xs uppercase tracking-widest transition-all cursor-pointer shadow-md"
+                      style={{ backgroundColor: '#059669', color: '#ffffff', opacity: (paystackCardNum.length < 16 || paystackExpiry.length < 5 || paystackCvv.length < 3) ? 0.6 : 1 }}
+                      className="w-full py-3 px-4 rounded-xl text-white font-extrabold text-xs uppercase tracking-widest transition-all cursor-pointer shadow-md hover:scale-[1.01] block border-2 border-emerald-700"
                     >
                       Pay NGN 2,000
                     </button>
@@ -574,7 +575,8 @@ export function SovereignSettingsView({ user, onUpdateUser, stealthActive }: Sov
                     <button
                       type="submit"
                       disabled={paystackPin.length < 4}
-                      className="w-full py-2.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 disabled:opacity-40 text-white font-bold text-[10px] uppercase tracking-widest transition-all cursor-pointer"
+                      style={{ backgroundColor: '#059669', color: '#ffffff', opacity: paystackPin.length < 4 ? 0.6 : 1 }}
+                      className="w-full py-2.5 rounded-lg text-white font-bold text-[10px] uppercase tracking-widest transition-all cursor-pointer border-2 border-emerald-700"
                     >
                       Authorize Transaction
                     </button>
@@ -628,7 +630,8 @@ export function SovereignSettingsView({ user, onUpdateUser, stealthActive }: Sov
                     <button
                       type="submit"
                       disabled={paystackOtp.length < 4}
-                      className="w-full py-2.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 disabled:opacity-40 text-white font-bold text-[10px] uppercase tracking-widest transition-all cursor-pointer"
+                      style={{ backgroundColor: '#059669', color: '#ffffff', opacity: paystackOtp.length < 4 ? 0.6 : 1 }}
+                      className="w-full py-2.5 rounded-lg text-white font-bold text-[10px] uppercase tracking-widest transition-all cursor-pointer border-2 border-emerald-700"
                     >
                       Authenticate Payment
                     </button>

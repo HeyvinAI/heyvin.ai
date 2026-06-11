@@ -1239,18 +1239,21 @@ export function LandingInteractiveShowcase({ onSignUpClick }: LandingInteractive
       </section>
 
       {/* FINAL HIGH-CONVERSION CTA PROMOTION */}
-      <section className="bg-gradient-to-br from-[#40121a] via-[#1b080b] to-[#25090f] text-white rounded-3xl p-8 sm:p-10 text-center space-y-6 relative overflow-hidden shadow-2xl mt-8 border border-red-950">
-        <div className="absolute top-0 left-0 w-32 h-32 bg-amber-500/5 rounded-full blur-2xl pointer-events-none" />
-        <div className="absolute bottom-0 right-0 w-32 h-32 bg-[#7C2D3E]/20 rounded-full blur-2xl pointer-events-none" />
+      <section 
+        style={{ backgroundColor: '#40121a' }}
+        className="text-white rounded-3xl p-8 sm:p-10 text-center space-y-6 relative overflow-hidden shadow-2xl mt-8 border-2 border-red-950"
+      >
+        <div className="absolute top-0 left-0 w-32 h-32 bg-amber-500/10 rounded-full blur-2xl pointer-events-none" />
+        <div className="absolute bottom-0 right-0 w-32 h-32 bg-[#7C2D3E]/30 rounded-full blur-2xl pointer-events-none" />
         
         <div className="space-y-3 relative z-10 max-w-2xl mx-auto">
-          <span className="text-[10px] uppercase font-bold tracking-widest text-amber-300 bg-amber-950/70 border border-amber-500/20 px-3.5 py-1 rounded-full">
+          <span className="text-[10px] uppercase font-bold tracking-widest text-[#40121a] bg-amber-300 border border-amber-500/40 px-3.5 py-1.5 rounded-full inline-block font-sans">
             100% Free & Device-Isolated
           </span>
-          <h2 className="text-3xl sm:text-4xl font-serif font-black text-amber-50 leading-tight">
+          <h2 className="text-3xl sm:text-4xl font-serif font-black text-amber-50 leading-tight drop-shadow-md">
             Ready to claim complete study authority?
           </h2>
-          <p className="text-xs sm:text-sm text-rose-100/90 leading-relaxed max-w-lg mx-auto font-sans font-medium">
+          <p className="text-xs sm:text-sm text-pink-100 font-sans font-bold leading-relaxed max-w-lg mx-auto">
             Create your local pseudonym profile under 30 seconds. Sync with secure Google OAuth calendars without exposing a single pixel of your personal life.
           </p>
         </div>
@@ -1259,7 +1262,7 @@ export function LandingInteractiveShowcase({ onSignUpClick }: LandingInteractive
           <button
             type="button"
             onClick={onSignUpClick}
-            className="w-full sm:w-auto px-8 py-3.5 rounded-xl text-xs uppercase font-extrabold tracking-wider bg-white text-[#7C2D3E] hover:bg-rose-50 transition-all cursor-pointer shadow-lg active:scale-95 flex items-center justify-center gap-2"
+            className="w-full sm:w-auto px-8 py-3.5 rounded-xl text-xs uppercase font-extrabold tracking-wider bg-white text-[#7C2D3E] hover:bg-rose-100 hover:scale-[1.02] transition-all cursor-pointer shadow-xl active:scale-95 flex items-center justify-center gap-2 border-2 border-amber-200"
           >
             <span>Create Your Safe Space Instantly</span>
             <Sparkles size={14} className="text-[#7C2D3E]" />
@@ -1268,13 +1271,13 @@ export function LandingInteractiveShowcase({ onSignUpClick }: LandingInteractive
           <button
             type="button"
             onClick={onSignUpClick}
-            className="w-full sm:w-auto px-6 py-3.5 rounded-xl text-xs uppercase font-extrabold tracking-wider bg-[#541a24] hover:bg-[#46141c] border border-white/10 text-orange-100 transition-all cursor-pointer shadow-md flex items-center justify-center gap-2"
+            className="w-full sm:w-auto px-6 py-3.5 rounded-xl text-xs uppercase font-extrabold tracking-wider bg-[#541a24] hover:bg-[#6b222e] border-2 border-white/20 text-orange-100 hover:scale-[1.02] transition-all cursor-pointer shadow-md flex items-center justify-center gap-2"
           >
             <span>Sign-On with Google</span>
           </button>
         </div>
         
-        <p className="text-[10px] text-rose-300 font-mono tracking-wide relative z-10 pt-2">
+        <p className="text-[11px] text-rose-350 font-mono tracking-wide relative z-10 pt-2 font-bold">
           🛡️ No credit cards. No server-side file storing. 100% confidentiality guaranteed.
         </p>
       </section>

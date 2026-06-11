@@ -7,7 +7,7 @@ import {
   Youtube, BookText, Map as MapIcon, Settings, MessageSquare
 } from "lucide-react";
 import { UserProfile, CheckIn, Task, SovereigntyScore, WeeklyReport, RehearseSession } from "./types";
-import { db, getActiveUser, seedUserData, authenticateSupabase } from "./lib/supabase";
+import { db, getActiveUser, seedUserData, authenticateSupabase, supabase } from "./lib/supabase";
 import { getAffirmation } from "./data/affirmations";
 
 // Modular Views
@@ -1136,35 +1136,46 @@ export default function App() {
                   {/* Direct text inputs */}
                   <div className="space-y-3">
                     <div className="space-y-1">
-                      <label className="text-[9px] font-bold uppercase tracking-wider text-[#7A6860]">First Name / Pseudonym</label>
+                      <label className="text-[10px] font-extrabold uppercase tracking-wider text-[#4A3932]">First Name / Pseudonym</label>
                       <input
                         type="text"
                         placeholder="e.g. Pricilla"
                         value={signupName}
                         onChange={(e) => setSignupName(e.target.value)}
-                        className="w-full p-2.5 rounded-lg border border-gray-200 text-xs focus:ring-1 focus:ring-[#7C2D3E] text-gray-800 focus:outline-none bg-[#FAF7F2]/50"
+                        className="w-full p-2.5 rounded-lg border border-gray-350 text-xs focus:ring-1 focus:ring-[#7C2D3E] text-gray-900 focus:outline-none bg-white shadow-xs font-semibold placeholder-gray-400"
                       />
                     </div>
                     
                     <div className="space-y-1">
-                      <label className="text-[9px] font-bold uppercase tracking-wider text-[#7A6860]">Study-Safe Email Address</label>
+                      <label className="text-[10px] font-extrabold uppercase tracking-wider text-[#4A3932]">Study-Safe Email Address</label>
                       <input
                         type="email"
                         placeholder="pricilla@gmail.com"
                         value={signupEmail}
                         onChange={(e) => setSignupEmail(e.target.value)}
-                        className="w-full p-2.5 rounded-lg border border-gray-200 text-xs focus:ring-1 focus:ring-[#7C2D3E] text-gray-800 focus:outline-none bg-[#FAF7F2]/50"
+                        className="w-full p-2.5 rounded-lg border border-gray-350 text-xs focus:ring-1 focus:ring-[#7C2D3E] text-gray-900 focus:outline-none bg-white shadow-xs font-semibold placeholder-gray-400"
+                      />
+                    </div>
+
+                    <div className="space-y-1">
+                      <label className="text-[10px] font-extrabold uppercase tracking-wider text-[#4A3932]">Sovereign Password</label>
+                      <input
+                        type="password"
+                        placeholder="••••••••"
+                        value={signupPassword}
+                        onChange={(e) => setSignupPassword(e.target.value)}
+                        className="w-full p-2.5 rounded-lg border border-gray-350 text-xs focus:ring-1 focus:ring-[#7C2D3E] text-gray-900 focus:outline-none bg-white shadow-xs font-semibold placeholder-gray-400"
                       />
                     </div>
                     
                     <button
                       type="button"
-                      disabled={!signupName.trim() || !signupEmail.trim()}
+                      disabled={!signupName.trim() || !signupEmail.trim() || !signupPassword.trim()}
                       onClick={() => {
                         setGuestView('auth');
                         setSignUpStep(2);
                       }}
-                      className="w-full py-2.5 rounded-xl text-xs uppercase font-extrabold tracking-wider bg-[#7C2D3E] hover:bg-[#60202e] text-white cursor-pointer transition-all disabled:opacity-40 flex items-center justify-center gap-1.5"
+                      className="w-full py-2.5 rounded-xl text-xs uppercase font-extrabold tracking-wider bg-[#7C2D3E] hover:bg-[#60202e] text-white cursor-pointer transition-all disabled:opacity-40 flex items-center justify-center gap-1.5 shadow-sm hover:shadow-md"
                     >
                       <span>Instant Learn Setup</span>
                       <ArrowRight size={12} />
@@ -1323,7 +1334,7 @@ export default function App() {
               </div>
             </div>
             {/* Right Panel: Active Credential Forms (With overflow scrollbar support so next buttons are always fully accessible) */}
-            <div className="lg:col-span-7 p-6 sm:p-10 md:p-12 lg:p-14 overflow-y-auto max-h-screen w-full flex flex-col justify-center font-sans">
+            <div className="lg:col-span-7 p-6 sm:p-10 md:p-12 lg:p-14 overflow-y-auto max-h-screen w-full flex flex-col justify-start py-8 sm:py-12 lg:py-16 font-sans">
               
               {/* Auth Mode Toggle Selectors */}
               <div className="flex bg-[#7C2D3E]/5 p-1 rounded-xl mb-6 max-w-xs border border-[#7C2D3E]/10">
@@ -1581,23 +1592,29 @@ export default function App() {
                     <label className="text-[11px] font-extrabold uppercase tracking-widest text-[#7C2D3E] block font-mono">1. Where are you based?</label>
                     <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                       {[
-                        { name: 'Nigeria', flag: '🇳🇬' },
-                        { name: 'India', flag: '🇮🇳' },
-                        { name: 'Mexico', flag: '🇲🇽' },
-                        { name: 'Other', flag: '🌍' }
+                        { name: 'Nigeria', flag: '🇳🇬', bgImage: 'https://images.unsplash.com/photo-1541872703-74c5e44368f9?auto=format&fit=crop&w=320&q=80' },
+                        { name: 'India', flag: '🇮🇳', bgImage: 'https://images.unsplash.com/photo-1524492412937-b28074a5d7da?auto=format&fit=crop&w=320&q=80' },
+                        { name: 'Mexico', flag: '🇲🇽', bgImage: 'https://images.unsplash.com/photo-1512813583145-baaa340ef29f?auto=format&fit=crop&w=320&q=80' },
+                        { name: 'Other', flag: '🌍', bgImage: 'https://images.unsplash.com/photo-1451187580459-43490279c0fa?auto=format&fit=crop&w=320&q=80' }
                       ].map((country) => (
                         <button
                           key={country.name}
                           type="button"
                           onClick={() => setSignupBasedIn(country.name as any)}
-                          className={`py-3 sm:py-4 px-2 rounded-2xl border transition-all cursor-pointer text-center flex flex-col items-center justify-center gap-1.5 shadow-xs hover:scale-[1.02] hover:shadow-sm ${
+                          className={`relative overflow-hidden group py-4 sm:py-5 px-2 rounded-2xl border transition-all cursor-pointer text-center flex flex-col items-center justify-center gap-1.5 shadow-sm hover:scale-[1.03] hover:shadow-md ${
                             signupBasedIn === country.name
-                              ? "border-[#7C2D3E] bg-[#7C2D3E]/5 text-amber-950 ring-2 ring-[#7C2D3E]/10"
-                              : "border-gray-200 text-gray-500 bg-white hover:border-gray-300"
+                              ? "border-[#7C2D3E] bg-[#7C2D3E]/10 text-[#54121e] ring-2 ring-[#7C2D3E]/30 font-black"
+                              : "border-gray-300 text-gray-800 bg-white hover:border-[#7C2D3E]/60"
                           }`}
                         >
-                          <span className="text-2xl sm:text-3xl leading-none">{country.flag}</span>
-                          <span className="text-xs font-extrabold font-sans tracking-wide">{country.name}</span>
+                          <div 
+                            className="absolute inset-0 bg-cover bg-center opacity-10 transition-opacity group-hover:opacity-15 rounded-2xl pointer-events-none" 
+                            style={{ backgroundImage: `url(${country.bgImage})` }} 
+                          />
+                          <div className="relative z-10 flex flex-col items-center justify-center pointer-events-none">
+                            <span className="text-2xl sm:text-3xl leading-none filter drop-shadow-sm">{country.flag}</span>
+                            <span className="text-[11px] font-extrabold font-sans tracking-wide mt-1 block uppercase">{country.name}</span>
+                          </div>
                         </button>
                       ))}
                     </div>
@@ -1617,20 +1634,20 @@ export default function App() {
                           key={sit.val}
                           type="button"
                           onClick={() => setSignupHomeSituation(sit.val as any)}
-                          className={`p-4 rounded-2xl text-left border flex items-center gap-3.5 transition-all cursor-pointer shadow-xs hover:scale-[1.01] hover:shadow-sm ${
+                          className={`p-4 rounded-2xl text-left border flex items-center gap-3.5 transition-all cursor-pointer shadow-sm hover:scale-[1.01] hover:shadow-md ${
                             signupHomeSituation === sit.val
-                              ? "border-[#7C2D3E] bg-[#7C2D3E]/5 ring-2 ring-[#7C2D3E]/10"
-                              : "border-gray-200 bg-white hover:border-gray-300"
+                              ? "border-[#7C2D3E] bg-[#7C2D3E]/10 ring-2 ring-[#7C2D3E]/30"
+                              : "border-gray-300 bg-white hover:border-gray-450 text-gray-850"
                           }`}
                         >
                           <div className={`text-2xl p-2 rounded-xl flex items-center justify-center transition-colors flex-shrink-0 ${
-                            signupHomeSituation === sit.val ? "bg-[#7C2D3E]/10 text-[#7C2D3E]" : "bg-gray-100 text-gray-400"
+                            signupHomeSituation === sit.val ? "bg-[#7C2D3E]/25 text-[#7C2D3E]" : "bg-gray-100 text-gray-500 border border-gray-200"
                           }`}>
                             {sit.emoji}
                           </div>
                           <div>
-                            <div className="block leading-snug font-bold text-amber-950 font-sans text-xs">{sit.val}</div>
-                            <span className="text-[10px] text-[#7A6860] font-normal leading-normal block mt-1">{sit.desc}</span>
+                            <div className="block leading-snug font-extrabold text-amber-950 font-sans text-xs">{sit.val}</div>
+                            <span className="text-[10px] text-[#4A3932] font-semibold leading-normal block mt-1">{sit.desc}</span>
                           </div>
                         </button>
                       ))}
@@ -1641,7 +1658,7 @@ export default function App() {
                     <button
                       type="button"
                       onClick={() => setSignUpStep(1)}
-                      className="py-3 px-5 rounded-xl text-xs font-bold text-amber-900 border border-orange-200 hover:bg-orange-50 bg-white transition-all cursor-pointer"
+                      className="py-3 px-6 rounded-xl text-xs font-extrabold text-gray-800 border-2 border-gray-400 hover:bg-gray-100 bg-white shadow-xs transition-all cursor-pointer active:scale-95"
                     >
                       Back
                     </button>
@@ -1661,7 +1678,7 @@ export default function App() {
               {signUpStep === 3 && (
                 <form onSubmit={handleSignUp} className="space-y-4 animate-fadeIn">
                   <div className="space-y-2">
-                    <label className="text-[10px] font-bold uppercase tracking-wider text-[#7A6860] block">Primary Study Goal</label>
+                    <label className="text-[10px] font-extrabold uppercase tracking-wider text-[#7C2D3E] block">Primary Study Goal</label>
                     <div className="grid grid-cols-1 gap-2">
                       {[
                         { val: 'University degree', desc: 'Preparing for examinations, lectures, and thesis submissions.' },
@@ -1672,26 +1689,26 @@ export default function App() {
                           key={goalOption.val}
                           type="button"
                           onClick={() => setSignupPrimaryGoal(goalOption.val as any)}
-                          className={`p-3.5 rounded-xl text-left border text-xs transition-all cursor-pointer ${
+                          className={`p-3.5 rounded-xl text-left border text-xs transition-all cursor-pointer shadow-xs hover:scale-[1.01] hover:shadow-sm ${
                             signupPrimaryGoal === goalOption.val
-                              ? "border-[#7C2D3E] bg-rose-50/40 font-bold"
-                              : "border-gray-200 bg-white hover:border-gray-300"
+                              ? "border-[#7C2D3E] bg-[#7C2D3E]/10 ring-2 ring-[#7C2D3E]/30 font-black"
+                              : "border-gray-300 bg-white hover:border-[#7C2D3E]/45 text-gray-800"
                           }`}
                         >
-                          <div className="block leading-none font-bold text-amber-950">{goalOption.val}</div>
-                          <span className="text-[9.5px] text-[#7A6860] font-normal leading-normal block mt-1">{goalOption.desc}</span>
+                          <div className="block leading-none font-extrabold text-amber-950">{goalOption.val}</div>
+                          <span className="text-[10px] text-[#4A3932] font-semibold leading-normal block mt-1">{goalOption.desc}</span>
                         </button>
                       ))}
                     </div>
                   </div>
 
                   {/* Reclaimed Focus Blocks Initial Target Meter */}
-                  <div className="p-4 bg-[#FAF7F2] border border-orange-100 rounded-xl space-y-2.5">
-                    <div className="flex justify-between items-center text-[10px] font-bold text-[#7C2D3E] uppercase tracking-wide">
+                  <div className="p-4 bg-[#FAF7F2] border border-gray-300 shadow-xs rounded-xl space-y-2.5">
+                    <div className="flex justify-between items-center text-[10px] font-extrabold text-[#7C2D3E] uppercase tracking-wide">
                       <span>🎯 Initial weekly target</span>
-                      <span className="font-mono">8 Sessions / week</span>
+                      <span className="font-mono text-emerald-800 font-black bg-emerald-50 px-2 py-0.5 rounded">8 Sessions / week</span>
                     </div>
-                    <p className="text-[10px] text-gray-500 leading-normal">
+                    <p className="text-[10px] text-gray-700 font-medium leading-normal">
                       We pre-load your workspace agenda with 8 custom study-lock slots tailored to help cushion domestic chores. You can adjust this schedule inside your profile calendar settings anytime.
                     </p>
                   </div>
@@ -1700,13 +1717,13 @@ export default function App() {
                     <button
                       type="button"
                       onClick={() => setSignUpStep(2)}
-                      className="py-3 px-4 rounded-xl text-xs font-bold text-amber-900 border border-orange-200 hover:bg-orange-50 bg-white transition-all cursor-pointer"
+                      className="py-3 px-6 rounded-xl text-xs font-extrabold text-gray-800 border-2 border-gray-400 hover:bg-gray-100 bg-white transition-all cursor-pointer active:scale-95 shadow-xs"
                     >
                       Back
                     </button>
                     <button
                       type="submit"
-                      className="flex-1 py-3 px-4 rounded-xl text-xs font-bold text-white bg-amber-900 hover:bg-[#60202e] transition-all hover:shadow-md flex items-center justify-center gap-2 cursor-pointer"
+                      className="flex-1 py-3 px-4 rounded-xl text-xs font-extrabold text-white bg-amber-900 hover:bg-[#60202e] transition-all hover:shadow-md flex items-center justify-center gap-2 cursor-pointer shadow-md"
                     >
                       <span>Establish Sovereign Space 🌟</span>
                     </button>
